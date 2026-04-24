@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_excise_tax_type_all,excise.tax.type.all,model_excise_tax_type,base.group_user,1,1,1,1
+access_excise_tax_type_manager,excise.tax.type.manager,model_excise_tax_type,account.group_account_manager,1,1,1,1

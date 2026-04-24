@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+
+        <!--
+            Dedicated tax group so Odoo's tax_totals widget renders the
+            excise tax as its own subtotal row before VAT.
+        -->
+        <record id="tax_group_excise" model="account.tax.group">
+            <field name="name">Swedish Excise Tax</field>
+            <field name="sequence">5</field>
+        </record>
+
+        <!--
+            ============================================================
+            Skatteverket reporting tags (account.account.tag)
+            ============================================================
+            Used by the punktskattedeklaration aggregation. We follow
+            Odoo's +/- convention: the same logical tag exists in two
+            variants so refunds (credit notes) reverse the sign.
+        -->
+        <record id="tag_chem_tax_base_invoice" model="account.account.tag">
+            <field name="name">+Kemikalieskatt - Underlag</field>
+            <field name="applicability">taxes</field>
+            <field name="country_id" ref="base.se"/>
+        </record>
+        <record id="tag_chem_tax_tax_invoice" model="account.account.tag">
+            <field name="name">+Kemikalieskatt - Skatt att betala</field>
+            <field name="applicability">taxes</field>
+            <field name="country_id" ref="base.se"/>
+        </record>
+        <record id="tag_chem_tax_base_refund" model="account.account.tag">
+            <field name="name">-Kemikalieskatt - Underlag</field>
+            <field name="applicability">taxes</field>
+            <field name="country_id" ref="base.se"/>
+        </record>
+        <record id="tag_chem_tax_tax_refund" model="account.account.tag">
+            <field name="name">-Kemikalieskatt - Skatt att betala</field>
+            <field name="applicability">taxes</field>
+            <field name="country_id" ref="base.se"/>
+        </record>
+
+        <!--
+            ============================================================
+            Excise Tax Types (rate + cap)
+            ============================================================
+        -->
+        <record id="excise_type_electronics" model="excise.tax.type">
+            <field name="name">Electronics (High Rate)</field>
+            <field name="tax_rate">114.0</field>
+            <field name="max_limit">562.0</field>
+        </record>
+
+        <record id="excise_type_major_appliances" model="excise.tax.type">
+            <field name="name">Major Appliances (Low Rate)</field>
+            <field name="tax_rate">11.0</field>
+            <field name="max_limit">562.0</field>
+        </record>
+
+        <!--
+            ============================================================
+            Account Taxes
+            ============================================================
+            Each tax has explicit invoice + refund repartition lines so
+            the tax amount lands on the correct liability account
+            (assigned per company by the post_init_hook) and is tagged
+            for the Skatteverket excise declaration.
+        -->
+        <record id="tax_chemical_electronics" model="account.tax">
+            <field name="name">CHEM E</field>
+            <field name="type_tax_use">sale</field>
+            <field name="amount_type">swedish_excise</field>
+            <field name="amount">0.0</field>
+            <field name="include_base_amount" eval="True"/>
+            <field name="sequence">1</field>
+            <field name="description">Chemical Tax (Electronics)</field>
+            <field name="excise_type_id" ref="excise_type_electronics"/>
+            <field name="tax_group_id" ref="tax_group_excise"/>
+            <field name="invoice_repartition_line_ids" eval="[
+                (5, 0, 0),
+                (0, 0, {
+                    'repartition_type': 'base',
+                    'factor_percent': 100,
+                    'tag_ids': [(6, 0, [ref('tag_chem_tax_base_invoice')])],
+                }),
+                (0, 0, {
+                    'repartition_type': 'tax',
+                    'factor_percent': 100,
+                    'use_in_tax_closing': True,
+                    'tag_ids': [(6, 0, [ref('tag_chem_tax_tax_invoice')])],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[
+                (5, 0, 0),
+                (0, 0, {
+                    'repartition_type': 'base',
+                    'factor_percent': 100,
+                    'tag_ids': [(6, 0, [ref('tag_chem_tax_base_refund')])],
+                }),
+                (0, 0, {
+                    'repartition_type': 'tax',
+                    'factor_percent': 100,
+                    'use_in_tax_closing': True,
+                    'tag_ids': [(6, 0, [ref('tag_chem_tax_tax_refund')])],
+                }),
+            ]"/>
+        </record>
+
+        <record id="tax_chemical_appliances" model="account.tax">
+            <field name="name">CHEM M</field>
+            <field name="type_tax_use">sale</field>
+            <field name="amount_type">swedish_excise</field>
+            <field name="amount">0.0</field>
+            <field name="include_base_amount" eval="True"/>
+            <field name="sequence">1</field>
+            <field name="description">Chemical Tax (Major Appliances)</field>
+            <field name="excise_type_id" ref="excise_type_major_appliances"/>
+            <field name="tax_group_id" ref="tax_group_excise"/>
+            <field name="invoice_repartition_line_ids" eval="[
+                (5, 0, 0),
+                (0, 0, {
+                    'repartition_type': 'base',
+                    'factor_percent': 100,
+                    'tag_ids': [(6, 0, [ref('tag_chem_tax_base_invoice')])],
+                }),
+                (0, 0, {
+                    'repartition_type': 'tax',
+                    'factor_percent': 100,
+                    'use_in_tax_closing': True,
+                    'tag_ids': [(6, 0, [ref('tag_chem_tax_tax_invoice')])],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[
+                (5, 0, 0),
+                (0, 0, {
+                    'repartition_type': 'base',
+                    'factor_percent': 100,
+                    'tag_ids': [(6, 0, [ref('tag_chem_tax_base_refund')])],
+                }),
+                (0, 0, {
+                    'repartition_type': 'tax',
+                    'factor_percent': 100,
+                    'use_in_tax_closing': True,
+                    'tag_ids': [(6, 0, [ref('tag_chem_tax_tax_refund')])],
+                }),
+            ]"/>
+        </record>
+
+    </data>
+</odoo>

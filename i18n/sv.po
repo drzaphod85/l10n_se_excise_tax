@@ -1,0 +1,542 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* l10n_se_excise_tax
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-21 00:00+0000\n"
+"PO-Revision-Date: 2026-04-21 00:00+0000\n"
+"Last-Translator: Lasse Larsson <lasse@familjenlarsson.eu>\n"
+"Language-Team: Swedish (sv)\n"
+"Language: sv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. module: l10n_se_excise_tax
+#: model:ir.module.module,shortdesc:base.module_l10n_se_excise_tax
+msgid "Swedish Excise Tax (Chemical Tax)"
+msgstr "Svensk punktskatt (Kemikalieskatt)"
+
+#. module: l10n_se_excise_tax
+#: model:ir.module.module,summary:base.module_l10n_se_excise_tax
+msgid "Manage chemical taxes and other excise duties applied before VAT."
+msgstr "Hantera kemikalieskatt och andra punktskatter som tillämpas före moms."
+
+#. module: l10n_se_excise_tax
+#: model:ir.module.module,description:base.module_l10n_se_excise_tax
+msgid ""
+"\n"
+"Swedish Excise Tax Management\n"
+"============================\n"
+"This module allows for the calculation of specific excise taxes (like the Swedish Chemical Tax) \n"
+"based on product weight and unit caps. \n"
+"\n"
+"Key features:\n"
+"* Define excise tax types with custom rates and maximum limits.\n"
+"* Apply reductions (e.g., 50% or 90%) per product.\n"
+"* Calculation logic integrated with Odoo's tax engine.\n"
+"* Support for taxes being included in the VAT base.\n"
+"    "
+msgstr ""
+"\n"
+"Hantering av svensk punktskatt\n"
+"=============================\n"
+"Denna modul möjliggör beräkning av specifika punktskatter (t.ex. den svenska\n"
+"kemikalieskatten) baserat på produktens vikt och tak per enhet.\n"
+"\n"
+"Viktiga funktioner:\n"
+"* Definiera punktskattetyper med egna skattesatser och maxgränser.\n"
+"* Tillämpa reduceringar (t.ex. 50 % eller 90 %) per produkt.\n"
+"* Beräkningslogiken är integrerad med Odoos skattemotor.\n"
+"* Stöd för att skatten ingår i momsunderlaget.\n"
+"    "
+
+# --------------------------------------------------------------------
+# Models
+# --------------------------------------------------------------------
+
+#. module: l10n_se_excise_tax
+#: model:ir.model,name:l10n_se_excise_tax.model_excise_tax_type
+msgid "Excise Tax Type"
+msgstr "Punktskattetyp"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model,name:l10n_se_excise_tax.model_account_tax
+msgid "Tax"
+msgstr "Skatt"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model,name:l10n_se_excise_tax.model_product_template
+msgid "Product"
+msgstr "Produkt"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model,name:l10n_se_excise_tax.model_sale_order_line
+msgid "Sales Order Line"
+msgstr "Orderrad"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model,name:l10n_se_excise_tax.model_account_move_line
+msgid "Journal Item"
+msgstr "Verifikatrad"
+
+# --------------------------------------------------------------------
+# Selection values
+# --------------------------------------------------------------------
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields.selection,name:l10n_se_excise_tax.selection__account_tax__amount_type__swedish_excise
+msgid "Swedish Excise Tax (Weight/Unit)"
+msgstr "Svensk punktskatt (vikt/enhet)"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields.selection,name:l10n_se_excise_tax.selection__product_template__excise_reduction__0
+msgid "No Reduction (100%)"
+msgstr "Ingen reducering (100 %)"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields.selection,name:l10n_se_excise_tax.selection__product_template__excise_reduction__50
+msgid "50% Reduction"
+msgstr "50 % reducering"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields.selection,name:l10n_se_excise_tax.selection__product_template__excise_reduction__90
+msgid "90% Reduction"
+msgstr "90 % reducering"
+
+# --------------------------------------------------------------------
+# excise.tax.type fields
+# --------------------------------------------------------------------
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_excise_tax_type__name
+msgid "Name"
+msgstr "Namn"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_excise_tax_type__tax_rate
+msgid "Tax Rate (SEK/kg)"
+msgstr "Skattesats (SEK/kg)"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_excise_tax_type__max_limit
+msgid "Maximum Limit per Unit"
+msgstr "Maxgräns per enhet"
+
+# --------------------------------------------------------------------
+# product.template fields
+# --------------------------------------------------------------------
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_product_template__is_excise_taxable
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_product_product__is_excise_taxable
+msgid "Excise Taxable"
+msgstr "Punktskattepliktig"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_product_template__excise_tax_type_id
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_product_product__excise_tax_type_id
+msgid "Excise Tax Type"
+msgstr "Punktskattetyp"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_product_template__net_weight_excise
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_product_product__net_weight_excise
+msgid "Excise Tax Weight (kg)"
+msgstr "Punktskattevikt (kg)"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,help:l10n_se_excise_tax.field_product_template__net_weight_excise
+#: model:ir.model.fields,help:l10n_se_excise_tax.field_product_product__net_weight_excise
+msgid "The weight used specifically for excise tax calculation."
+msgstr "Vikten som används specifikt för beräkning av punktskatten."
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_product_template__excise_reduction
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_product_product__excise_reduction
+msgid "Reduction Level"
+msgstr "Reduceringsnivå"
+
+# --------------------------------------------------------------------
+# account.tax fields
+# --------------------------------------------------------------------
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_account_tax__excise_type_id
+msgid "Linked Excise Type"
+msgstr "Kopplad punktskattetyp"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,help:l10n_se_excise_tax.field_account_tax__excise_type_id
+msgid ""
+"Weight-based rate and per-unit cap used to compute the excise amount when "
+"amount_type is 'swedish_excise'."
+msgstr ""
+"Viktbaserad skattesats och tak per enhet som används för att beräkna "
+"punktskatten när beloppstypen är ”Svensk punktskatt”."
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_account_tax__excise_rate_display
+msgid "Rate (SEK/kg)"
+msgstr "Skattesats (SEK/kg)"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_account_tax__excise_max_limit_display
+msgid "Max Limit per Unit (SEK)"
+msgstr "Maxgräns per enhet (SEK)"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_account_tax__excise_posting_account_id
+msgid "Posting Account"
+msgstr "Bokföringskonto"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,help:l10n_se_excise_tax.field_account_tax__excise_posting_account_id
+msgid ""
+"Liability account where the excise tax amount is booked. Derived from the "
+"first 'tax'-type invoice repartition line."
+msgstr ""
+"Skuldkonto där punktskattebeloppet bokförs. Hämtas från första "
+"repartitionsraden av typen ”skatt” på fakturan."
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_account_tax__excise_posting_tags
+msgid "Reporting Tags"
+msgstr "Rapporteringstaggar"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,help:l10n_se_excise_tax.field_account_tax__excise_posting_tags
+msgid ""
+"Skatteverket excise-declaration tags attached to this tax, aggregated across"
+" invoice and refund repartition lines."
+msgstr ""
+"Skatteverkets deklarationstaggar för punktskatt som är kopplade till denna "
+"skatt, sammanställda från faktura- och kreditrepartitionsrader."
+
+# --------------------------------------------------------------------
+# sale.order.line fields
+# --------------------------------------------------------------------
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_sale_order_line__excise_weight
+msgid "Excise Weight (kg)"
+msgstr "Punktskattevikt (kg)"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,help:l10n_se_excise_tax.field_sale_order_line__excise_weight
+msgid ""
+"Weight (kg) used to calculate the Swedish excise tax for this line. "
+"Snapshotted from the product when selected."
+msgstr ""
+"Vikt (kg) som används för att beräkna svensk punktskatt för denna rad. "
+"Sparas från produkten när den väljs."
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_sale_order_line__excise_reduction_ratio
+msgid "Excise Reduction Ratio"
+msgstr "Reduceringsfaktor för punktskatt"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,help:l10n_se_excise_tax.field_sale_order_line__excise_reduction_ratio
+msgid ""
+"Reduction factor applied to the weight-based excise amount. 1.0 = full tax, "
+"0.5 = 50% reduction, 0.1 = 90% reduction."
+msgstr ""
+"Reduceringsfaktor som tillämpas på det viktbaserade punktskattebeloppet. "
+"1,0 = full skatt, 0,5 = 50 % reducering, 0,1 = 90 % reducering."
+
+# --------------------------------------------------------------------
+# account.move.line fields (source is already Swedish – keep identical)
+# --------------------------------------------------------------------
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_account_move_line__excise_weight
+msgid "Skattevikt (Snapshot)"
+msgstr "Skattevikt (ögonblicksbild)"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,help:l10n_se_excise_tax.field_account_move_line__excise_weight
+msgid "Vikt som används för beräkning vid faktureringstillfället."
+msgstr "Vikt som används för beräkning vid faktureringstillfället."
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_account_move_line__excise_reduction_ratio
+msgid "Avdragsfaktor"
+msgstr "Avdragsfaktor"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,help:l10n_se_excise_tax.field_account_move_line__excise_reduction_ratio
+msgid "Reduktionsfaktor (1.0, 0.5 eller 0.1) vid faktureringstillfället."
+msgstr "Reduceringsfaktor (1,0, 0,5 eller 0,1) vid faktureringstillfället."
+
+# --------------------------------------------------------------------
+# Actions & menus
+# --------------------------------------------------------------------
+
+#. module: l10n_se_excise_tax
+#: model:ir.actions.act_window,name:l10n_se_excise_tax.action_excise_tax_type
+#: model:ir.ui.menu,name:l10n_se_excise_tax.menu_excise_tax_type
+msgid "Excise Tax Settings"
+msgstr "Punktskatteinställningar"
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.actions.act_window,help:l10n_se_excise_tax.action_excise_tax_type
+msgid "Create a new Excise Tax Type"
+msgstr "Skapa en ny punktskattetyp"
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.actions.act_window,help:l10n_se_excise_tax.action_excise_tax_type
+msgid ""
+"Excise Tax Types define the per-kg rate and per-unit cap\n"
+"                used by weight-based excise taxes (e.g. the Swedish\n"
+"                Chemical Tax). Each type can be linked to one or more\n"
+"                <em>account.tax</em> records."
+msgstr ""
+"Punktskattetyper definierar skattesatsen per kg och taket per enhet\n"
+"                som används av viktbaserade punktskatter (t.ex. den\n"
+"                svenska kemikalieskatten). Varje typ kan kopplas till\n"
+"                en eller flera <em>account.tax</em>-poster."
+
+# --------------------------------------------------------------------
+# Views – product.template inherit
+# --------------------------------------------------------------------
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.product_template_excise_form_inherit
+msgid "Excise Tax Settings"
+msgstr "Punktskatteinställningar"
+
+# --------------------------------------------------------------------
+# Views – excise.tax.type form
+# --------------------------------------------------------------------
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.view_excise_tax_type_form
+msgid "Excise Tax Type"
+msgstr "Punktskattetyp"
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.view_excise_tax_type_form
+msgid "e.g. Electronics (High Rate)"
+msgstr "t.ex. Elektronik (hög sats)"
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.view_excise_tax_type_form
+msgid "Rate"
+msgstr "Skattesats"
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.view_excise_tax_type_form
+msgid "Cap"
+msgstr "Tak"
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.view_excise_tax_type_form
+msgid "How it's used:"
+msgstr "Så här används det:"
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.view_excise_tax_type_form
+msgid ""
+"For every product line\n"
+"                        taxed with an <em>account.tax</em> of type\n"
+"                        <code>Swedish Excise Tax</code> linked to this record,\n"
+"                        the excise amount per unit is\n"
+"                        <code>net_weight_excise × tax_rate</code>,\n"
+"                        capped at <code>max_limit</code> and then multiplied\n"
+"                        by the line's reduction factor (100% / 50% / 10%)."
+msgstr ""
+"För varje produktrad som\n"
+"                        beskattas med en <em>account.tax</em> av typen\n"
+"                        <code>Svensk punktskatt</code> kopplad till denna post,\n"
+"                        beräknas punktskatten per enhet som\n"
+"                        <code>net_weight_excise × tax_rate</code>,\n"
+"                        begränsad till <code>max_limit</code> och därefter\n"
+"                        multiplicerad med radens reduceringsfaktor\n"
+"                        (100 % / 50 % / 10 %)."
+
+# --------------------------------------------------------------------
+# Views – account.tax inherit (excise block + Posting Setup)
+# --------------------------------------------------------------------
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.view_tax_form_excise_inherit
+msgid ""
+"This tax is calculated from the product's excise weight\n"
+"                    and the configured per-kg rate. VAT is computed on\n"
+"                    (line subtotal + excise)."
+msgstr ""
+"Skatten beräknas utifrån produktens punktskattevikt\n"
+"                    och den konfigurerade satsen per kg. Moms beräknas på\n"
+"                    (radens delsumma + punktskatt)."
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.view_tax_form_excise_inherit
+msgid ""
+"Editing the rate or max limit here updates the\n"
+"                        underlying Excise Type and therefore every tax\n"
+"                        linked to it. Confirmed sales orders and posted\n"
+"                        invoices are not affected — they keep the\n"
+"                        amounts computed at validation time."
+msgstr ""
+"Att redigera skattesatsen eller maxgränsen här uppdaterar\n"
+"                        den underliggande punktskattetypen och därmed\n"
+"                        alla skatter som är kopplade till den. Bekräftade\n"
+"                        kundorder och bokförda fakturor påverkas inte —\n"
+"                        de behåller de belopp som beräknades vid\n"
+"                        valideringstillfället."
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.view_tax_form_excise_inherit
+msgid "Posting Setup"
+msgstr "Bokföringsinställning"
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.view_tax_form_excise_inherit
+msgid ""
+"These values are derived from the Definition\n"
+"                            tab's invoice &amp; refund repartition lines.\n"
+"                            The liability account is assigned per\n"
+"                            company at install time (BAS 2616 if\n"
+"                            available, else 2615 / 2640 / 2980). To\n"
+"                            change it, open the Definition tab and edit\n"
+"                            the repartition grid directly."
+msgstr ""
+"Dessa värden härleds från repartitionsraderna för\n"
+"                            faktura och kredit i fliken Definition.\n"
+"                            Skuldkontot tilldelas per bolag vid\n"
+"                            installation (BAS 2616 om det finns,\n"
+"                            annars 2615 / 2640 / 2980). För att ändra\n"
+"                            det, öppna fliken Definition och redigera\n"
+"                            repartitionsrutnätet direkt."
+
+# --------------------------------------------------------------------
+# Data records (account.tax.group, excise.tax.type demo data,
+# account.tax demo data).  These translate the values set in
+# data/excise_tax_data.xml.
+# --------------------------------------------------------------------
+
+#. module: l10n_se_excise_tax
+#: model:account.tax.group,name:l10n_se_excise_tax.tax_group_excise
+msgid "Swedish Excise Tax"
+msgstr "Svensk punktskatt"
+
+#. module: l10n_se_excise_tax
+#: model:excise.tax.type,name:l10n_se_excise_tax.excise_type_electronics
+msgid "Electronics (High Rate)"
+msgstr "Elektronik (hög sats)"
+
+#. module: l10n_se_excise_tax
+#: model:excise.tax.type,name:l10n_se_excise_tax.excise_type_major_appliances
+msgid "Major Appliances (Low Rate)"
+msgstr "Vitvaror (låg sats)"
+
+#. module: l10n_se_excise_tax
+#: model:account.tax,description:l10n_se_excise_tax.tax_chemical_electronics
+msgid "Chemical Tax (Electronics)"
+msgstr "Kemikalieskatt (Elektronik)"
+
+#. module: l10n_se_excise_tax
+#: model:account.tax,description:l10n_se_excise_tax.tax_chemical_appliances
+msgid "Chemical Tax (Major Appliances)"
+msgstr "Kemikalieskatt (Vitvaror)"
+
+# --------------------------------------------------------------------
+# res.company display toggles
+# --------------------------------------------------------------------
+
+#. module: l10n_se_excise_tax
+#: model:ir.model,name:l10n_se_excise_tax.model_res_company
+msgid "Companies"
+msgstr "Bolag"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model,name:l10n_se_excise_tax.model_res_config_settings
+msgid "Config Settings"
+msgstr "Inställningar"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_res_company__excise_show_as_separate_row
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_res_config_settings__excise_show_as_separate_row
+msgid "Show Excise Tax as Separate Row"
+msgstr "Visa punktskatt som egen rad"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,help:l10n_se_excise_tax.field_res_company__excise_show_as_separate_row
+#: model:ir.model.fields,help:l10n_se_excise_tax.field_res_config_settings__excise_show_as_separate_row
+msgid ""
+"When enabled, the Swedish excise tax appears on its own row between Untaxed "
+"Amount and VAT on quotations, sales orders, invoices and their PDF / portal "
+"renderings. When disabled, the excise amount is folded into the Untaxed "
+"Amount so the customer does not see a separate line (the VAT base and the "
+"total stay identical)."
+msgstr ""
+"När aktiverad visas den svenska punktskatten på en egen rad mellan "
+"obeskattat belopp och moms på offerter, kundorder, fakturor samt deras PDF- "
+"och portalvisningar. När den är inaktiverad räknas punktskatten in i det "
+"obeskattade beloppet så att kunden inte ser någon separat rad (momsunderlaget "
+"och totalbeloppet är oförändrade)."
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_res_company__hide_vat_row_on_quotations
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_res_config_settings__hide_vat_row_on_quotations
+msgid "Hide VAT Row on Quotations"
+msgstr "Dölj momsraden på offerter"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,help:l10n_se_excise_tax.field_res_company__hide_vat_row_on_quotations
+#: model:ir.model.fields,help:l10n_se_excise_tax.field_res_config_settings__hide_vat_row_on_quotations
+msgid ""
+"Hide the VAT / moms row in the totals block of quotations and sales orders "
+"(on-screen widget, PDF and customer portal). Useful for B2C price "
+"presentation before an invoice is issued. Posted invoices always show the "
+"VAT row regardless of this setting, as Mervärdesskattelagen 11 kap. 8 § "
+"requires a final invoice to disclose the VAT amount and rate separately. "
+"VAT is still calculated and posted in the background."
+msgstr ""
+"Dölj rader för moms i totalblocket på offerter och kundorder (visning på "
+"skärm, PDF och kundportal). Användbart för B2C-prisvisning innan en faktura "
+"utfärdas. Bokförda fakturor visar alltid momsraden oavsett denna "
+"inställning, eftersom Mervärdesskattelagen 11 kap. 8 § kräver att en "
+"slutgiltig faktura redovisar momsens belopp och sats separat. Momsen "
+"beräknas och bokförs fortfarande i bakgrunden."
+
+# --------------------------------------------------------------------
+# Views – res.config.settings (Accounting settings page)
+# --------------------------------------------------------------------
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.res_config_settings_view_form_l10n_se_excise_tax
+msgid "Swedish Excise Tax"
+msgstr "Svensk punktskatt"
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.res_config_settings_view_form_l10n_se_excise_tax
+msgid "Show Excise Tax as Separate Row"
+msgstr "Visa punktskatt som egen rad"
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.res_config_settings_view_form_l10n_se_excise_tax
+msgid "Hide VAT Row on Quotations"
+msgstr "Dölj momsraden på offerter"
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.res_config_settings_view_form_l10n_se_excise_tax
+msgid ""
+"Applies to quotations and sales orders\n"
+"                                only. Invoices (<em>account.move</em>)\n"
+"                                continue to display the VAT row so\n"
+"                                the statutory disclosure required by\n"
+"                                <em>Mervärdesskattelagen 11 kap. 8 §</em>\n"
+"                                is respected."
+msgstr ""
+"Gäller endast offerter och kundorder.\n"
+"                                Fakturor (<em>account.move</em>) visar\n"
+"                                fortfarande momsraden så att den\n"
+"                                lagstadgade redovisningen enligt\n"
+"                                <em>Mervärdesskattelagen 11 kap. 8 §</em>\n"
+"                                respekteras."

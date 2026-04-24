@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Adds a "Swedish Excise Tax" block to the Accounting / Invoicing
+        settings page with the two display toggles: one for the excise
+        row itself, one for VAT (with a compliance warning).
+
+        The block is anchored inside the standard Accounting/Invoicing
+        <app> container using `position="inside"`, which is stable
+        across Odoo 17, 18 and 19 even when individual sub-blocks are
+        renamed or reordered by downstream localisations.
+    -->
+    <record id="res_config_settings_view_form_l10n_se_excise_tax"
+            model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.l10n_se_excise_tax.inherit</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="account.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//app[@name='account']" position="inside">
+                <block title="Swedish Excise Tax"
+                       id="l10n_se_excise_tax_block"
+                       name="l10n_se_excise_tax_block">
+
+                    <setting id="l10n_se_excise_show_row_setting"
+                             title="Show Excise Tax as Separate Row"
+                             help="Whether the Swedish excise tax
+                                   appears as its own row between
+                                   Untaxed Amount and VAT on
+                                   quotations, sales orders, invoices
+                                   and their PDF / portal renderings.
+                                   When disabled, the excise amount is
+                                   folded into Untaxed Amount (VAT
+                                   base and total are unchanged).">
+                        <field name="excise_show_as_separate_row"/>
+                    </setting>
+
+                    <setting id="l10n_se_hide_vat_row_setting"
+                             title="Hide VAT Row on Quotations"
+                             help="Hide the VAT row in the totals
+                                   block of quotations and sales
+                                   orders (screen, PDF and portal).
+                                   Useful for B2C price presentation
+                                   before an invoice is issued.
+                                   Posted invoices always show VAT,
+                                   as required by Mervärdesskattelagen
+                                   11 kap. 8 §.">
+                        <field name="hide_vat_row_on_quotations"/>
+                        <div class="text-muted mt8"
+                             invisible="not hide_vat_row_on_quotations">
+                            <small>
+                                <i class="fa fa-info-circle"/>
+                                Applies to quotations and sales orders
+                                only. Invoices (<em>account.move</em>)
+                                continue to display the VAT row so
+                                the statutory disclosure required by
+                                <em>Mervärdesskattelagen 11 kap. 8 §</em>
+                                is respected.
+                            </small>
+                        </div>
+                    </setting>
+
+                </block>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

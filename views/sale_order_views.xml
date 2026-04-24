@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Expose the excise snapshot fields on the quotation / sales
+        order line. They're rendered as optional columns so they don't
+        clutter the default layout for non-excise products.
+    -->
+    <record id="view_order_form_excise_inherit" model="ir.ui.view">
+        <field name="name">sale.order.form.excise.inherit</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='order_line']/list/field[@name='product_uom_qty']" position="after">
+                <field name="excise_weight" optional="hide"/>
+                <field name="excise_reduction_ratio" optional="hide" widget="percentage"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

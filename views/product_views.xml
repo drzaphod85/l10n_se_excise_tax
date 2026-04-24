@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="product_template_excise_form_inherit" model="ir.ui.view">
+        <field name="name">product.template.excise.form.inherit</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='sales']" position="inside">
+                <group string="Excise Tax Settings" name="excise_tax_group">
+                    <field name="is_excise_taxable"/>
+                    <field name="excise_tax_type_id" 
+                           invisible="not is_excise_taxable"
+                           required="is_excise_taxable"/>
+                    <field name="net_weight_excise" 
+                           invisible="not is_excise_taxable"/>
+                    <field name="excise_reduction" 
+                           invisible="not is_excise_taxable"
+                           widget="radio"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_excise_tax_type_list" model="ir.ui.view">
+        <field name="name">excise.tax.type.list</field>
+        <field name="model">excise.tax.type</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="name"/>
+                <field name="tax_rate"/>
+                <field name="max_limit"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_excise_tax_type_form" model="ir.ui.view">
+        <field name="name">excise.tax.type.form</field>
+        <field name="model">excise.tax.type</field>
+        <field name="arch" type="xml">
+            <form string="Excise Tax Type">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name" placeholder="e.g. Electronics (High Rate)"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Rate">
+                            <field name="tax_rate"/>
+                        </group>
+                        <group string="Cap">
+                            <field name="max_limit"/>
+                        </group>
+                    </group>
+                    <div class="alert alert-info" role="alert">
+                        <strong>How it's used:</strong> For every product line
+                        taxed with an <em>account.tax</em> of type
+                        <code>Swedish Excise Tax</code> linked to this record,
+                        the excise amount per unit is
+                        <code>net_weight_excise &#215; tax_rate</code>,
+                        capped at <code>max_limit</code> and then multiplied
+                        by the line's reduction factor (100% / 50% / 10%).
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_excise_tax_type" model="ir.actions.act_window">
+        <field name="name">Excise Tax Settings</field>
+        <field name="res_model">excise.tax.type</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new Excise Tax Type
+            </p>
+            <p>
+                Excise Tax Types define the per-kg rate and per-unit cap
+                used by weight-based excise taxes (e.g. the Swedish
+                Chemical Tax). Each type can be linked to one or more
+                <em>account.tax</em> records.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_excise_tax_type" 
+              name="Excise Tax Settings" 
+              parent="account.menu_finance_configuration" 
+              action="action_excise_tax_type" 
+              sequence="100"/>
+</odoo>

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Extend the Tax form so the Swedish excise configuration lives
+        right on the tax record. Everything is anchored to the
+        amount_type field (always present in the form) rather than to
+        the standard amount field, which Odoo 19 hides for non-fixed /
+        non-percent / non-division taxes and would take our additions
+        with it.
+    -->
+    <record id="view_tax_form_excise_inherit" model="ir.ui.view">
+        <field name="name">account.tax.form.excise.inherit</field>
+        <field name="model">account.tax</field>
+        <field name="inherit_id" ref="account.view_tax_form"/>
+        <field name="arch" type="xml">
+
+            <!--
+                Keep only plain fields inside the amount_type insertion
+                point. Mixing a nested <group> or full-width <div> into
+                the two-column parent group collapses its label slots
+                and blanks out the labels of nearby standard fields
+                (name, description, amount, …). The info alert and the
+                Posting Setup summary therefore live in their own block
+                further down the form (see the notebook xpath below).
+            -->
+            <field name="amount_type" position="after">
+                <field name="excise_type_id"
+                       invisible="amount_type != 'swedish_excise'"
+                       required="amount_type == 'swedish_excise'"
+                       options="{'no_quick_create': False}"/>
+                <field name="excise_rate_display"
+                       invisible="amount_type != 'swedish_excise' or not excise_type_id"/>
+                <field name="excise_max_limit_display"
+                       invisible="amount_type != 'swedish_excise' or not excise_type_id"/>
+            </field>
+
+            <!--
+                Excise-specific helper block rendered between the top
+                group and the Definition notebook. Contains the info
+                alert and the Posting Setup summary (GL account +
+                aggregated Skatteverket tags). Fully hidden unless the
+                tax is a swedish_excise tax.
+            -->
+            <xpath expr="//notebook" position="before">
+                <div invisible="amount_type != 'swedish_excise'"
+                     class="alert alert-info" role="alert">
+                    This tax is calculated from the product's excise weight
+                    and the configured per-kg rate. VAT is computed on
+                    (line subtotal + excise).
+                    <br/>
+                    <small class="text-muted">
+                        Editing the rate or max limit here updates the
+                        underlying Excise Type and therefore every tax
+                        linked to it. Confirmed sales orders and posted
+                        invoices are not affected — they keep the
+                        amounts computed at validation time.
+                    </small>
+                </div>
+                <group string="Posting Setup"
+                       name="excise_posting_setup"
+                       invisible="amount_type != 'swedish_excise'">
+                    <field name="excise_posting_account_id" readonly="1"/>
+                    <field name="excise_posting_tags" readonly="1"/>
+                    <div class="text-muted" colspan="2">
+                        <small>
+                            These values are derived from the Definition
+                            tab's invoice &amp; refund repartition lines.
+                            The liability account is assigned per
+                            company at install time (BAS 2616 if
+                            available, else 2615 / 2640 / 2980). To
+                            change it, open the Definition tab and edit
+                            the repartition grid directly.
+                        </small>
+                    </div>
+                </group>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>
