@@ -87,24 +87,31 @@ class AccountTax(models.Model):
     # Excise computation helpers
     # ------------------------------------------------------------------
     def _get_excise_unit_amount(self, weight=0.0, reduction_ratio=1.0,
-                                volume=0.0):
+                                volume=0.0, pieces=0.0):
         """Return the excise amount for a SINGLE unit of product.
 
         Dispatches on ``self.excise_type_id.unit_basis``:
 
         * ``'kg'``    — weight × rate, capped at ``max_limit``,
-                       multiplied by ``reduction_ratio``.
-        * ``'liter'`` — volume × rate (no cap, no reduction in the
-                       current Phase-2a scope; nicotine doesn't use
-                       either).
+                       multiplied by ``reduction_ratio`` if the
+                       excise type has the Kemikalieskatt-style
+                       reduction.
+        * ``'liter'`` — volume × rate (no cap, no reduction).
+        * ``'pcs'``   — pieces × rate (no cap, no reduction).
+                       ``pieces`` is the number of countable units
+                       inside one product unit (e.g. 20 cigarettes
+                       per pack).
 
         Future ``unit_basis`` values (``'tonne'``, ``'liter_pure'``,
-        ``'pcs'``, …) get their own branches as the corresponding
-        Phase-2/3/4 taxes are implemented.
+        ``'m3'``, …) get their own branches as the corresponding
+        Phase-3/4 taxes are implemented.
 
-        :param float weight:          Snapshot net weight (kg) for kg-based.
-        :param float reduction_ratio: 1.0 / 0.5 / 0.1 (kg-based only).
-        :param float volume:          Snapshot volume (L) for liter-based.
+        :param float weight:          Snapshot weight (kg) — kg basis.
+        :param float volume:          Snapshot volume (L) — liter basis.
+        :param float pieces:          Snapshot piece count — pcs basis.
+        :param float reduction_ratio: 1.0 / 0.5 / 0.1 — kg basis only,
+                                       only when ``has_reduction_levels``
+                                       is True on the excise type.
         :return float: Per-unit excise amount in company currency.
         """
         self.ensure_one()
@@ -133,6 +140,11 @@ class AccountTax(models.Model):
             if volume <= 0.0:
                 return 0.0
             return volume * excise.tax_rate
+
+        if basis == 'pcs':
+            if pieces <= 0.0:
+                return 0.0
+            return pieces * excise.tax_rate
 
         # Unknown / not-yet-supported basis — return 0 so that
         # adding a new selection value before its computation
@@ -170,6 +182,7 @@ class AccountTax(models.Model):
             unit_amount = self._get_excise_unit_amount(
                 weight=excise_vals.get('excise_weight', 0.0) or 0.0,
                 volume=excise_vals.get('excise_volume', 0.0) or 0.0,
+                pieces=excise_vals.get('excise_pieces', 0.0) or 0.0,
                 reduction_ratio=(
                     excise_vals.get('excise_reduction_ratio', 1.0) or 1.0
                 ),

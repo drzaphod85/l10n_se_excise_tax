@@ -13,17 +13,25 @@ _logger = logging.getLogger(__name__)
 # - Kemikalieskatt: 2616 ("Kemikalieskatt att betala", custom but
 #   common), then 2615 (sometimes reused from the reduced VAT series),
 #   then 2640 (Övrig punktskatt), then 2980 (Övriga skatteskulder).
+# - Tobaksskatt: 2630 ("Skuld punktskatt tobak"), then 2640, then
+#   2980. 2630 is the standard BAS code reserved for tobacco-tax
+#   liabilities.
 # - Nikotinskatt: there's no widely-accepted custom BAS code for
 #   nicotine yet — most accountants use 2640 (Övrig punktskatt) and
 #   sub-categorise via reporting tags. Falls back to 2980.
 #
 # Any swedish_excise tax whose excise_type isn't in this map gets
 # the legacy default chain (kemikalie-style); add new categories
-# (alcohol → 2620, tobacco → 2630, …) here as Phase 2/3/4 tax
-# records land.
+# (alcohol → 2620, …) here as Phase 2c / 3 / 4 tax records land.
 _CANDIDATES_BY_EXCISE_TYPE_XMLID = {
     'l10n_se_excise_tax.excise_type_electronics':       ('2616', '2615', '2640', '2980'),
     'l10n_se_excise_tax.excise_type_major_appliances':  ('2616', '2615', '2640', '2980'),
+    'l10n_se_excise_tax.excise_type_tobacco_cigarettes': ('2630', '2640', '2980'),
+    'l10n_se_excise_tax.excise_type_tobacco_cigars':     ('2630', '2640', '2980'),
+    'l10n_se_excise_tax.excise_type_tobacco_snus':       ('2630', '2640', '2980'),
+    'l10n_se_excise_tax.excise_type_tobacco_smoking':    ('2630', '2640', '2980'),
+    'l10n_se_excise_tax.excise_type_tobacco_chewing':    ('2630', '2640', '2980'),
+    'l10n_se_excise_tax.excise_type_tobacco_other':      ('2630', '2640', '2980'),
     'l10n_se_excise_tax.excise_type_nicotine_eliquid':       ('2640', '2980'),
     'l10n_se_excise_tax.excise_type_nicotine_eliquid_high':  ('2640', '2980'),
     'l10n_se_excise_tax.excise_type_nicotine_other':         ('2640', '2980'),

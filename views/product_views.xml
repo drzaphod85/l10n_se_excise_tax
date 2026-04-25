@@ -40,12 +40,22 @@
                     -->
                     <field name="excise_unit_basis" invisible="1"/>
                     <field name="excise_has_reduction_levels" invisible="1"/>
+                    <!--
+                        Show the driver field that matches the linked
+                        Excise Type's unit_basis. When no type is
+                        picked yet (excise_unit_basis is False), we
+                        default to the legacy kg field so the form is
+                        usable while the user decides.
+                    -->
                     <field name="net_weight_excise"
                            invisible="not is_excise_taxable
-                                      or excise_unit_basis == 'liter'"/>
+                                      or excise_unit_basis in ('liter', 'pcs')"/>
                     <field name="excise_volume_litres"
                            invisible="not is_excise_taxable
                                       or excise_unit_basis != 'liter'"/>
+                    <field name="excise_pieces_per_qty"
+                           invisible="not is_excise_taxable
+                                      or excise_unit_basis != 'pcs'"/>
                     <!--
                         The Reduction Level radio is Kemikalieskatt-
                         specific (50%/90% reductions for products

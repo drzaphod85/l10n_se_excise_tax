@@ -37,7 +37,8 @@ class ExciseTaxType(models.Model):
         selection=[
             ('kg', 'Weight in kilograms (kg)'),
             ('liter', 'Volume in litres (L)'),
-            # Future: 'tonne', 'liter_pure', 'pcs', 'm3', 'kWh',
+            ('pcs', 'Piece count (per styck)'),
+            # Future: 'tonne', 'liter_pure', 'm3', 'kWh',
             # 'passenger', 'percent_base'. Each one needs its own
             # branch in ``_eval_tax_amount_fixed_amount`` and a
             # matching per-product driver field, so they're added
@@ -50,7 +51,10 @@ class ExciseTaxType(models.Model):
              "reads when computing the excise on a line, and what "
              "unit ``Tax Rate`` is expressed in. ``kg`` reads "
              "``net_weight_excise``; ``liter`` reads "
-             "``excise_volume_litres``.",
+             "``excise_volume_litres``; ``pcs`` reads "
+             "``excise_pieces_per_qty`` (per piece — useful for "
+             "cigarettes / cigars where a pack of 20 = "
+             "pieces_per_qty=20).",
     )
     tax_rate = fields.Float(
         string="Tax Rate",
@@ -108,6 +112,16 @@ class ProductTemplate(models.Model):
         help="Volume in litres used for excise tax calculation when "
              "the linked Excise Type's Unit Basis is 'liter' (e.g. "
              "nicotine e-liquid).",
+    )
+    excise_pieces_per_qty = fields.Float(
+        string="Excise Pieces per Unit",
+        default=1.0,
+        digits=(12, 2),
+        help="Number of countable pieces in one product unit, used "
+             "for excise tax calculation when the linked Excise "
+             "Type's Unit Basis is 'pcs'. Examples: a pack of 20 "
+             "cigarettes sold as one product unit → 20; a single "
+             "cigar → 1; a box of 10 cigars sold as one unit → 10.",
     )
 
     excise_reduction = fields.Selection(

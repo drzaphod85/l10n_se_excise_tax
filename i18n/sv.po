@@ -148,6 +148,22 @@ msgid "Volume in litres (L)"
 msgstr "Volym i liter (L)"
 
 #. module: l10n_se_excise_tax
+#: model:ir.model.fields.selection,name:l10n_se_excise_tax.selection__excise_tax_type__unit_basis__pcs
+msgid "Piece count (per styck)"
+msgstr "Antal styck"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_product_template__excise_pieces_per_qty
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_product_product__excise_pieces_per_qty
+msgid "Excise Pieces per Unit"
+msgstr "Antal styck per produktenhet"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_sale_order_line__excise_pieces
+msgid "Excise Pieces (per unit)"
+msgstr "Antal styck (per enhet)"
+
+#. module: l10n_se_excise_tax
 #: model:ir.model.fields,field_description:l10n_se_excise_tax.field_product_template__excise_volume_litres
 #: model:ir.model.fields,field_description:l10n_se_excise_tax.field_product_product__excise_volume_litres
 msgid "Excise Tax Volume (L)"
@@ -643,3 +659,67 @@ msgstr ""
 "kontakt. Den godkända lagerhållaren ansvarar själv för att deklarera och "
 "betala skatten när varorna säljs vidare till en slutkund som inte är "
 "godkänd lagerhållare."
+
+# --------------------------------------------------------------------
+# Tobaksskatt — excise types and taxes
+# --------------------------------------------------------------------
+
+#. module: l10n_se_excise_tax
+#: model:excise.tax.type,name:l10n_se_excise_tax.excise_type_tobacco_cigarettes
+msgid "Tobacco — Cigarettes (per piece)"
+msgstr "Tobak — Cigaretter (per styck)"
+
+#. module: l10n_se_excise_tax
+#: model:excise.tax.type,name:l10n_se_excise_tax.excise_type_tobacco_cigars
+msgid "Tobacco — Cigars / cigarillos (per piece)"
+msgstr "Tobak — Cigarrer / cigariller (per styck)"
+
+#. module: l10n_se_excise_tax
+#: model:excise.tax.type,name:l10n_se_excise_tax.excise_type_tobacco_snus
+msgid "Tobacco — Snus (per kg)"
+msgstr "Tobak — Snus (per kg)"
+
+#. module: l10n_se_excise_tax
+#: model:excise.tax.type,name:l10n_se_excise_tax.excise_type_tobacco_smoking
+msgid "Tobacco — Smoking tobacco (per kg)"
+msgstr "Tobak — Röktobak (per kg)"
+
+#. module: l10n_se_excise_tax
+#: model:excise.tax.type,name:l10n_se_excise_tax.excise_type_tobacco_chewing
+msgid "Tobacco — Chewing tobacco (per kg)"
+msgstr "Tobak — Tuggtobak (per kg)"
+
+#. module: l10n_se_excise_tax
+#: model:excise.tax.type,name:l10n_se_excise_tax.excise_type_tobacco_other
+msgid "Tobacco — Other tobacco products (per kg)"
+msgstr "Tobak — Övrig tobak (per kg)"
+
+#. module: l10n_se_excise_tax
+#: model:account.tax,description:l10n_se_excise_tax.tax_tobacco_cigarettes
+msgid "Tobacco Tax (Cigarettes, per piece)"
+msgstr "Tobaksskatt (cigaretter, per styck)"
+
+#. module: l10n_se_excise_tax
+#: model:account.tax,description:l10n_se_excise_tax.tax_tobacco_cigars
+msgid "Tobacco Tax (Cigars / cigarillos, per piece)"
+msgstr "Tobaksskatt (cigarrer / cigariller, per styck)"
+
+#. module: l10n_se_excise_tax
+#: model:account.tax,description:l10n_se_excise_tax.tax_tobacco_snus
+msgid "Tobacco Tax (Snus, per kg)"
+msgstr "Tobaksskatt (snus, per kg)"
+
+#. module: l10n_se_excise_tax
+#: model:account.tax,description:l10n_se_excise_tax.tax_tobacco_smoking
+msgid "Tobacco Tax (Smoking tobacco, per kg)"
+msgstr "Tobaksskatt (röktobak, per kg)"
+
+#. module: l10n_se_excise_tax
+#: model:account.tax,description:l10n_se_excise_tax.tax_tobacco_chewing
+msgid "Tobacco Tax (Chewing tobacco, per kg)"
+msgstr "Tobaksskatt (tuggtobak, per kg)"
+
+#. module: l10n_se_excise_tax
+#: model:account.tax,description:l10n_se_excise_tax.tax_tobacco_other
+msgid "Tobacco Tax (Other tobacco, per kg)"
+msgstr "Tobaksskatt (övrig tobak, per kg)"

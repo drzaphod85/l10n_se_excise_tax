@@ -5,17 +5,20 @@ sales orders and invoices. The supported taxes today are:
 
 - **Kemikalieskatt** (Chemical Tax) on certain electronics and
   major appliances.
+- **Tobaksskatt** (Tobacco Tax) on cigarettes (per piece), cigars
+  / cigarillos (per piece), snus, smoking tobacco, chewing tobacco
+  and other tobacco products (per kg).
 - **Nikotinskatt** (Nicotine Tax) on e-liquids (regular and
   high-concentration) and other nicotine products (white snus,
   pouches, etc.).
 
 The architecture is generic — see [Adding a new excise
 tax](#adding-a-new-excise-tax) at the bottom — so adding alcohol,
-tobacco, gravel, energy, or any other weight- / volume- / unit-based
+gravel, energy, or any other weight- / volume- / piece-based
 excise regime is largely a data-file exercise rather than a code
 change.
 
-* **Version:** 19.0.2.0.3
+* **Version:** 19.0.3.0.0
 * **License:** LGPL-3
 * **Author:** Lasse Larsson
 * **Category:** Accounting / Localizations
@@ -271,9 +274,23 @@ Taxes** alongside VAT:
 |---------------------|--------------------------------------------------------------|
 | `CHEM E`            | High-rate Kemikalieskatt — most consumer electronics         |
 | `CHEM M`            | Low-rate Kemikalieskatt — major appliances (vitvaror)        |
+| `TOB CIG`           | Tobaksskatt on cigarettes (2.08 SEK/piece)                   |
+| `TOB CGR`           | Tobaksskatt on cigars / cigarillos (1.83 SEK/piece)          |
+| `TOB SNUS`          | Tobaksskatt on snus (435 SEK/kg)                             |
+| `TOB RÖK`           | Tobaksskatt on smoking tobacco (2 525 SEK/kg)                |
+| `TOB TUG`           | Tobaksskatt on chewing tobacco (598 SEK/kg)                  |
+| `TOB ÖVR`           | Tobaksskatt on other tobacco (2 525 SEK/kg)                  |
 | `NIK E-V`           | Nikotinskatt on regular e-liquid                             |
 | `NIK E-V H`         | Nikotinskatt on high-concentration e-liquid                  |
 | `NIK ÖVR`           | Nikotinskatt on other nicotine products (per kg)             |
+
+> ℹ️ **Cigarette ad-valorem leg deferred.** Swedish cigarette tax
+> is `2.08 SEK/piece + 1 % of retail price`. Only the per-piece
+> leg (`TOB CIG`) ships in v1; the 1 % ad-valorem on retail price
+> isn't supported because it requires a Skatteverket-set
+> weighted-average price per product, not the actual line price.
+> AWK distributors who need it can add a custom percent tax
+> alongside `TOB CIG`.
 
 ### Tax form
 
@@ -328,7 +345,8 @@ l10n_se_excise_tax/
 │   ├── 19.0.1.1.0/pre-migration.py
 │   ├── 19.0.1.2.0/pre-migration.py
 │   ├── 19.0.1.3.1/post-migration.py
-│   └── 19.0.2.0.0/post-migration.py
+│   ├── 19.0.2.0.0/post-migration.py
+│   └── 19.0.3.0.0/post-migration.py
 ├── models/
 │   ├── __init__.py
 │   ├── account_move.py         # _l10n_se_get_tax_totals_for_render
@@ -374,13 +392,14 @@ no reduction).
 
 The shipped values are:
 
-| `unit_basis` | What the engine reads from the line | Example                  |
-|--------------|--------------------------------------|--------------------------|
-| `kg`         | `excise_weight` (kg, snapshotted)    | Kemikalieskatt, snus     |
-| `liter`      | `excise_volume` (L, snapshotted)     | Nicotine e-liquid        |
+| `unit_basis` | What the engine reads from the line | Example                                |
+|--------------|--------------------------------------|----------------------------------------|
+| `kg`         | `excise_weight` (kg, snapshotted)    | Kemikalieskatt, snus, röktobak         |
+| `liter`      | `excise_volume` (L, snapshotted)     | Nicotine e-liquid                      |
+| `pcs`        | `excise_pieces` (count per product unit, snapshotted) | Cigarettes, cigars / cigarillos        |
 
-If your tax needs a different driver (`tonne`, `pcs`, `liter_pure`,
-…), see Step 5 below — you'll add a new branch in
+If your tax needs a different driver (`tonne`, `liter_pure`, `m3`, …),
+see Step 5 below — you'll add a new branch in
 `account_tax.py::_get_excise_unit_amount` and a new per-product
 field on `product.template`.
 

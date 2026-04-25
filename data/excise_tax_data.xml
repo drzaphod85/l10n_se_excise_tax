@@ -45,6 +45,32 @@
 
         <!--
             ============================================================
+            Skatteverket reporting tags — Tobaksskatt
+            ============================================================
+        -->
+        <record id="tag_tobacco_tax_base_invoice" model="account.account.tag">
+            <field name="name">+Tobaksskatt - Underlag</field>
+            <field name="applicability">taxes</field>
+            <field name="country_id" ref="base.se"/>
+        </record>
+        <record id="tag_tobacco_tax_tax_invoice" model="account.account.tag">
+            <field name="name">+Tobaksskatt - Skatt att betala</field>
+            <field name="applicability">taxes</field>
+            <field name="country_id" ref="base.se"/>
+        </record>
+        <record id="tag_tobacco_tax_base_refund" model="account.account.tag">
+            <field name="name">-Tobaksskatt - Underlag</field>
+            <field name="applicability">taxes</field>
+            <field name="country_id" ref="base.se"/>
+        </record>
+        <record id="tag_tobacco_tax_tax_refund" model="account.account.tag">
+            <field name="name">-Tobaksskatt - Skatt att betala</field>
+            <field name="applicability">taxes</field>
+            <field name="country_id" ref="base.se"/>
+        </record>
+
+        <!--
+            ============================================================
             Skatteverket reporting tags — Nikotinskatt
             ============================================================
         -->
@@ -98,6 +124,68 @@
             <field name="tax_rate">12.42</field>
             <field name="max_limit">552.27</field>
             <field name="has_reduction_levels" eval="True"/>
+        </record>
+
+        <!--
+            ============================================================
+            Tobaksskatt — Excise Tax Types (2026 rates per Skatteverket)
+            ============================================================
+            * Cigaretter (per styck)         2.08 SEK/styck
+              + ad-valorem 1% av detaljhandelspriset (DEFERRED — see
+                README; ship the per-styck leg only in v1).
+            * Cigarrer / cigariller          1.83 SEK/styck
+            * Snus                             435 SEK/kg
+            * Röktobak                       2 525 SEK/kg
+            * Tuggtobak                        598 SEK/kg
+            * Övrig tobak                    2 525 SEK/kg
+            No max_limit (no per-unit cap), no reduction.
+        -->
+        <record id="excise_type_tobacco_cigarettes" model="excise.tax.type">
+            <field name="name">Tobacco — Cigarettes (per piece)</field>
+            <field name="country_id" ref="base.se"/>
+            <field name="unit_basis">pcs</field>
+            <field name="tax_rate">2.08</field>
+            <field name="max_limit">0.0</field>
+        </record>
+
+        <record id="excise_type_tobacco_cigars" model="excise.tax.type">
+            <field name="name">Tobacco — Cigars / cigarillos (per piece)</field>
+            <field name="country_id" ref="base.se"/>
+            <field name="unit_basis">pcs</field>
+            <field name="tax_rate">1.83</field>
+            <field name="max_limit">0.0</field>
+        </record>
+
+        <record id="excise_type_tobacco_snus" model="excise.tax.type">
+            <field name="name">Tobacco — Snus (per kg)</field>
+            <field name="country_id" ref="base.se"/>
+            <field name="unit_basis">kg</field>
+            <field name="tax_rate">435.00</field>
+            <field name="max_limit">0.0</field>
+        </record>
+
+        <record id="excise_type_tobacco_smoking" model="excise.tax.type">
+            <field name="name">Tobacco — Smoking tobacco (per kg)</field>
+            <field name="country_id" ref="base.se"/>
+            <field name="unit_basis">kg</field>
+            <field name="tax_rate">2525.00</field>
+            <field name="max_limit">0.0</field>
+        </record>
+
+        <record id="excise_type_tobacco_chewing" model="excise.tax.type">
+            <field name="name">Tobacco — Chewing tobacco (per kg)</field>
+            <field name="country_id" ref="base.se"/>
+            <field name="unit_basis">kg</field>
+            <field name="tax_rate">598.00</field>
+            <field name="max_limit">0.0</field>
+        </record>
+
+        <record id="excise_type_tobacco_other" model="excise.tax.type">
+            <field name="name">Tobacco — Other tobacco products (per kg)</field>
+            <field name="country_id" ref="base.se"/>
+            <field name="unit_basis">kg</field>
+            <field name="tax_rate">2525.00</field>
+            <field name="max_limit">0.0</field>
         </record>
 
         <!--
@@ -237,6 +325,184 @@
                     'use_in_tax_closing': True,
                     'tag_ids': [(6, 0, [ref('tag_chem_tax_tax_refund')])],
                 }),
+            ]"/>
+        </record>
+
+        <!--
+            ============================================================
+            Tobaksskatt — Account Taxes
+            ============================================================
+            Six records, one per tobacco category. Same plumbing as
+            Kemikalieskatt and Nikotinskatt (sequence=0,
+            include_base_amount=True, swedish_excise amount type).
+            Posting account is bound by ``hooks.post_init_hook`` to
+            BAS 2630 (Skuld punktskatt tobak) → 2640 → 2980.
+        -->
+        <record id="tax_tobacco_cigarettes" model="account.tax">
+            <field name="name">TOB CIG</field>
+            <field name="type_tax_use">sale</field>
+            <field name="amount_type">swedish_excise</field>
+            <field name="amount">0.0</field>
+            <field name="include_base_amount" eval="True"/>
+            <field name="sequence">0</field>
+            <field name="description">Tobacco Tax (Cigarettes, per piece)</field>
+            <field name="excise_type_id" ref="excise_type_tobacco_cigarettes"/>
+            <field name="tax_group_id" ref="tax_group_excise"/>
+            <field name="invoice_repartition_line_ids" eval="[
+                (5, 0, 0),
+                (0, 0, {'repartition_type': 'base', 'factor_percent': 100,
+                        'tag_ids': [(6, 0, [ref('tag_tobacco_tax_base_invoice')])]}),
+                (0, 0, {'repartition_type': 'tax', 'factor_percent': 100,
+                        'use_in_tax_closing': True,
+                        'tag_ids': [(6, 0, [ref('tag_tobacco_tax_tax_invoice')])]}),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[
+                (5, 0, 0),
+                (0, 0, {'repartition_type': 'base', 'factor_percent': 100,
+                        'tag_ids': [(6, 0, [ref('tag_tobacco_tax_base_refund')])]}),
+                (0, 0, {'repartition_type': 'tax', 'factor_percent': 100,
+                        'use_in_tax_closing': True,
+                        'tag_ids': [(6, 0, [ref('tag_tobacco_tax_tax_refund')])]}),
+            ]"/>
+        </record>
+
+        <record id="tax_tobacco_cigars" model="account.tax">
+            <field name="name">TOB CGR</field>
+            <field name="type_tax_use">sale</field>
+            <field name="amount_type">swedish_excise</field>
+            <field name="amount">0.0</field>
+            <field name="include_base_amount" eval="True"/>
+            <field name="sequence">0</field>
+            <field name="description">Tobacco Tax (Cigars / cigarillos, per piece)</field>
+            <field name="excise_type_id" ref="excise_type_tobacco_cigars"/>
+            <field name="tax_group_id" ref="tax_group_excise"/>
+            <field name="invoice_repartition_line_ids" eval="[
+                (5, 0, 0),
+                (0, 0, {'repartition_type': 'base', 'factor_percent': 100,
+                        'tag_ids': [(6, 0, [ref('tag_tobacco_tax_base_invoice')])]}),
+                (0, 0, {'repartition_type': 'tax', 'factor_percent': 100,
+                        'use_in_tax_closing': True,
+                        'tag_ids': [(6, 0, [ref('tag_tobacco_tax_tax_invoice')])]}),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[
+                (5, 0, 0),
+                (0, 0, {'repartition_type': 'base', 'factor_percent': 100,
+                        'tag_ids': [(6, 0, [ref('tag_tobacco_tax_base_refund')])]}),
+                (0, 0, {'repartition_type': 'tax', 'factor_percent': 100,
+                        'use_in_tax_closing': True,
+                        'tag_ids': [(6, 0, [ref('tag_tobacco_tax_tax_refund')])]}),
+            ]"/>
+        </record>
+
+        <record id="tax_tobacco_snus" model="account.tax">
+            <field name="name">TOB SNUS</field>
+            <field name="type_tax_use">sale</field>
+            <field name="amount_type">swedish_excise</field>
+            <field name="amount">0.0</field>
+            <field name="include_base_amount" eval="True"/>
+            <field name="sequence">0</field>
+            <field name="description">Tobacco Tax (Snus, per kg)</field>
+            <field name="excise_type_id" ref="excise_type_tobacco_snus"/>
+            <field name="tax_group_id" ref="tax_group_excise"/>
+            <field name="invoice_repartition_line_ids" eval="[
+                (5, 0, 0),
+                (0, 0, {'repartition_type': 'base', 'factor_percent': 100,
+                        'tag_ids': [(6, 0, [ref('tag_tobacco_tax_base_invoice')])]}),
+                (0, 0, {'repartition_type': 'tax', 'factor_percent': 100,
+                        'use_in_tax_closing': True,
+                        'tag_ids': [(6, 0, [ref('tag_tobacco_tax_tax_invoice')])]}),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[
+                (5, 0, 0),
+                (0, 0, {'repartition_type': 'base', 'factor_percent': 100,
+                        'tag_ids': [(6, 0, [ref('tag_tobacco_tax_base_refund')])]}),
+                (0, 0, {'repartition_type': 'tax', 'factor_percent': 100,
+                        'use_in_tax_closing': True,
+                        'tag_ids': [(6, 0, [ref('tag_tobacco_tax_tax_refund')])]}),
+            ]"/>
+        </record>
+
+        <record id="tax_tobacco_smoking" model="account.tax">
+            <field name="name">TOB RÖK</field>
+            <field name="type_tax_use">sale</field>
+            <field name="amount_type">swedish_excise</field>
+            <field name="amount">0.0</field>
+            <field name="include_base_amount" eval="True"/>
+            <field name="sequence">0</field>
+            <field name="description">Tobacco Tax (Smoking tobacco, per kg)</field>
+            <field name="excise_type_id" ref="excise_type_tobacco_smoking"/>
+            <field name="tax_group_id" ref="tax_group_excise"/>
+            <field name="invoice_repartition_line_ids" eval="[
+                (5, 0, 0),
+                (0, 0, {'repartition_type': 'base', 'factor_percent': 100,
+                        'tag_ids': [(6, 0, [ref('tag_tobacco_tax_base_invoice')])]}),
+                (0, 0, {'repartition_type': 'tax', 'factor_percent': 100,
+                        'use_in_tax_closing': True,
+                        'tag_ids': [(6, 0, [ref('tag_tobacco_tax_tax_invoice')])]}),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[
+                (5, 0, 0),
+                (0, 0, {'repartition_type': 'base', 'factor_percent': 100,
+                        'tag_ids': [(6, 0, [ref('tag_tobacco_tax_base_refund')])]}),
+                (0, 0, {'repartition_type': 'tax', 'factor_percent': 100,
+                        'use_in_tax_closing': True,
+                        'tag_ids': [(6, 0, [ref('tag_tobacco_tax_tax_refund')])]}),
+            ]"/>
+        </record>
+
+        <record id="tax_tobacco_chewing" model="account.tax">
+            <field name="name">TOB TUG</field>
+            <field name="type_tax_use">sale</field>
+            <field name="amount_type">swedish_excise</field>
+            <field name="amount">0.0</field>
+            <field name="include_base_amount" eval="True"/>
+            <field name="sequence">0</field>
+            <field name="description">Tobacco Tax (Chewing tobacco, per kg)</field>
+            <field name="excise_type_id" ref="excise_type_tobacco_chewing"/>
+            <field name="tax_group_id" ref="tax_group_excise"/>
+            <field name="invoice_repartition_line_ids" eval="[
+                (5, 0, 0),
+                (0, 0, {'repartition_type': 'base', 'factor_percent': 100,
+                        'tag_ids': [(6, 0, [ref('tag_tobacco_tax_base_invoice')])]}),
+                (0, 0, {'repartition_type': 'tax', 'factor_percent': 100,
+                        'use_in_tax_closing': True,
+                        'tag_ids': [(6, 0, [ref('tag_tobacco_tax_tax_invoice')])]}),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[
+                (5, 0, 0),
+                (0, 0, {'repartition_type': 'base', 'factor_percent': 100,
+                        'tag_ids': [(6, 0, [ref('tag_tobacco_tax_base_refund')])]}),
+                (0, 0, {'repartition_type': 'tax', 'factor_percent': 100,
+                        'use_in_tax_closing': True,
+                        'tag_ids': [(6, 0, [ref('tag_tobacco_tax_tax_refund')])]}),
+            ]"/>
+        </record>
+
+        <record id="tax_tobacco_other" model="account.tax">
+            <field name="name">TOB ÖVR</field>
+            <field name="type_tax_use">sale</field>
+            <field name="amount_type">swedish_excise</field>
+            <field name="amount">0.0</field>
+            <field name="include_base_amount" eval="True"/>
+            <field name="sequence">0</field>
+            <field name="description">Tobacco Tax (Other tobacco, per kg)</field>
+            <field name="excise_type_id" ref="excise_type_tobacco_other"/>
+            <field name="tax_group_id" ref="tax_group_excise"/>
+            <field name="invoice_repartition_line_ids" eval="[
+                (5, 0, 0),
+                (0, 0, {'repartition_type': 'base', 'factor_percent': 100,
+                        'tag_ids': [(6, 0, [ref('tag_tobacco_tax_base_invoice')])]}),
+                (0, 0, {'repartition_type': 'tax', 'factor_percent': 100,
+                        'use_in_tax_closing': True,
+                        'tag_ids': [(6, 0, [ref('tag_tobacco_tax_tax_invoice')])]}),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[
+                (5, 0, 0),
+                (0, 0, {'repartition_type': 'base', 'factor_percent': 100,
+                        'tag_ids': [(6, 0, [ref('tag_tobacco_tax_base_refund')])]}),
+                (0, 0, {'repartition_type': 'tax', 'factor_percent': 100,
+                        'use_in_tax_closing': True,
+                        'tag_ids': [(6, 0, [ref('tag_tobacco_tax_tax_refund')])]}),
             ]"/>
         </record>
 
