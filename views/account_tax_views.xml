@@ -29,10 +29,14 @@
                        invisible="amount_type != 'swedish_excise'"
                        required="amount_type == 'swedish_excise'"
                        options="{'no_quick_create': False}"/>
+                <field name="excise_unit_basis_display"
+                       invisible="amount_type != 'swedish_excise' or not excise_type_id"/>
                 <field name="excise_rate_display"
                        invisible="amount_type != 'swedish_excise' or not excise_type_id"/>
                 <field name="excise_max_limit_display"
-                       invisible="amount_type != 'swedish_excise' or not excise_type_id"/>
+                       invisible="amount_type != 'swedish_excise'
+                                  or not excise_type_id
+                                  or excise_unit_basis_display != 'kg'"/>
             </field>
 
             <!--
@@ -45,9 +49,12 @@
             <xpath expr="//notebook" position="before">
                 <div invisible="amount_type != 'swedish_excise'"
                      class="alert alert-info" role="alert">
-                    This tax is calculated from the product's excise weight
-                    and the configured per-kg rate. VAT is computed on
-                    (line subtotal + excise).
+                    This tax is calculated from the per-product driver
+                    matching the linked Excise Type's
+                    <strong>Unit Basis</strong> (weight in kg, volume in
+                    litres, …) and the configured rate. VAT is computed on
+                    (line subtotal + excise) thanks to the
+                    <em>include_base_amount</em> cascade.
                     <br/>
                     <small class="text-muted">
                         Editing the rate or max limit here updates the

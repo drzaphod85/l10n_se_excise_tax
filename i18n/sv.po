@@ -119,13 +119,83 @@ msgstr "Namn"
 
 #. module: l10n_se_excise_tax
 #: model:ir.model.fields,field_description:l10n_se_excise_tax.field_excise_tax_type__tax_rate
-msgid "Tax Rate (SEK/kg)"
-msgstr "Skattesats (SEK/kg)"
+msgid "Tax Rate"
+msgstr "Skattesats"
 
 #. module: l10n_se_excise_tax
 #: model:ir.model.fields,field_description:l10n_se_excise_tax.field_excise_tax_type__max_limit
 msgid "Maximum Limit per Unit"
 msgstr "Maxgräns per enhet"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_excise_tax_type__unit_basis
+msgid "Unit Basis"
+msgstr "Enhetsbas"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_excise_tax_type__country_id
+msgid "Country"
+msgstr "Land"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields.selection,name:l10n_se_excise_tax.selection__excise_tax_type__unit_basis__kg
+msgid "Weight in kilograms (kg)"
+msgstr "Vikt i kilogram (kg)"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields.selection,name:l10n_se_excise_tax.selection__excise_tax_type__unit_basis__liter
+msgid "Volume in litres (L)"
+msgstr "Volym i liter (L)"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_product_template__excise_volume_litres
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_product_product__excise_volume_litres
+msgid "Excise Tax Volume (L)"
+msgstr "Punktskattevolym (L)"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_sale_order_line__excise_volume
+msgid "Excise Volume (L)"
+msgstr "Punktskattevolym (L)"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_account_tax__excise_unit_basis_display
+msgid "Unit Basis"
+msgstr "Enhetsbas"
+
+# --------------------------------------------------------------------
+# Nikotinskatt — excise types and taxes
+# --------------------------------------------------------------------
+
+#. module: l10n_se_excise_tax
+#: model:excise.tax.type,name:l10n_se_excise_tax.excise_type_nicotine_eliquid
+msgid "Nicotine — E-liquid (regular)"
+msgstr "Nikotin — E-vätska (vanlig)"
+
+#. module: l10n_se_excise_tax
+#: model:excise.tax.type,name:l10n_se_excise_tax.excise_type_nicotine_eliquid_high
+msgid "Nicotine — E-liquid (high concentration)"
+msgstr "Nikotin — E-vätska (högkoncentrerad)"
+
+#. module: l10n_se_excise_tax
+#: model:excise.tax.type,name:l10n_se_excise_tax.excise_type_nicotine_other
+msgid "Nicotine — Other products (per kg)"
+msgstr "Nikotin — Övriga produkter (per kg)"
+
+#. module: l10n_se_excise_tax
+#: model:account.tax,description:l10n_se_excise_tax.tax_nicotine_eliquid
+msgid "Nicotine Tax (E-liquid)"
+msgstr "Nikotinskatt (e-vätska)"
+
+#. module: l10n_se_excise_tax
+#: model:account.tax,description:l10n_se_excise_tax.tax_nicotine_eliquid_high
+msgid "Nicotine Tax (E-liquid, high concentration)"
+msgstr "Nikotinskatt (e-vätska, högkoncentrerad)"
+
+#. module: l10n_se_excise_tax
+#: model:account.tax,description:l10n_se_excise_tax.tax_nicotine_other
+msgid "Nicotine Tax (Other products, per kg)"
+msgstr "Nikotinskatt (övriga produkter, per kg)"
 
 # --------------------------------------------------------------------
 # product.template fields
@@ -181,8 +251,8 @@ msgstr ""
 
 #. module: l10n_se_excise_tax
 #: model:ir.model.fields,field_description:l10n_se_excise_tax.field_account_tax__excise_rate_display
-msgid "Rate (SEK/kg)"
-msgstr "Skattesats (SEK/kg)"
+msgid "Rate (SEK / unit)"
+msgstr "Skattesats (SEK / enhet)"
 
 #. module: l10n_se_excise_tax
 #: model:ir.model.fields,field_description:l10n_se_excise_tax.field_account_tax__excise_max_limit_display

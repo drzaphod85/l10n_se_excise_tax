@@ -8,12 +8,20 @@ class AccountMoveLine(models.Model):
     excise_weight = fields.Float(
         string="Skattevikt (Snapshot)",
         digits='Stock Weight',
-        help="Vikt som används för beräkning vid faktureringstillfället.",
+        help="Vikt (kg) som används för beräkning vid faktureringstillfället. "
+             "Konsulteras endast när skattetypens enhet är 'kg'.",
+    )
+    excise_volume = fields.Float(
+        string="Skattevolym (Snapshot)",
+        digits=(12, 4),
+        help="Volym (L) som används för beräkning vid faktureringstillfället. "
+             "Konsulteras endast när skattetypens enhet är 'liter'.",
     )
     excise_reduction_ratio = fields.Float(
         string="Avdragsfaktor",
         default=1.0,
-        help="Reduktionsfaktor (1.0, 0.5 eller 0.1) vid faktureringstillfället.",
+        help="Reduktionsfaktor (1.0, 0.5 eller 0.1) vid faktureringstillfället. "
+             "Specifik för Kemikalieskatt; ignoreras av andra punktskattetyper.",
     )
 
     # ------------------------------------------------------------------
@@ -39,7 +47,8 @@ class AccountMoveLine(models.Model):
     @api.depends(
         'price_unit', 'price_subtotal', 'quantity',
         'tax_ids.amount_type', 'tax_ids.excise_type_id',
-        'excise_weight', 'excise_reduction_ratio',
+        'tax_ids.excise_type_id.unit_basis',
+        'excise_weight', 'excise_volume', 'excise_reduction_ratio',
         'move_id.company_id.excise_show_as_separate_row',
         'move_id.company_id.country_id',
         'move_id.partner_id.l10n_se_approved_warehouse_keeper',
@@ -61,8 +70,9 @@ class AccountMoveLine(models.Model):
                 )
                 if not exempt:
                     per_unit = excise_tax._get_excise_unit_amount(
-                        line.excise_weight or 0.0,
-                        line.excise_reduction_ratio or 1.0,
+                        weight=line.excise_weight or 0.0,
+                        volume=line.excise_volume or 0.0,
+                        reduction_ratio=line.excise_reduction_ratio or 1.0,
                     )
             line.excise_unit_amount = per_unit
             fold = not (line.move_id.company_id.excise_show_as_separate_row
@@ -84,11 +94,13 @@ class AccountMoveLine(models.Model):
             product = line.product_id
             if product and product.is_excise_taxable:
                 line.excise_weight = product.net_weight_excise
+                line.excise_volume = product.excise_volume_litres
                 line.excise_reduction_ratio = mapping.get(
                     product.excise_reduction, 1.0,
                 )
             else:
                 line.excise_weight = 0.0
+                line.excise_volume = 0.0
                 line.excise_reduction_ratio = 1.0
 
     # ------------------------------------------------------------------
@@ -124,6 +136,7 @@ class AccountMoveLine(models.Model):
         excise_ctx = {
             'excise_line_vals': {
                 'excise_weight': self.excise_weight or 0.0,
+                'excise_volume': self.excise_volume or 0.0,
                 'excise_reduction_ratio': self.excise_reduction_ratio or 1.0,
             },
         }

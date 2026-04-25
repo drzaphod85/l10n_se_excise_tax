@@ -6,15 +6,59 @@
         <field name="inherit_id" ref="product.product_template_form_view"/>
         <field name="arch" type="xml">
             <xpath expr="//page[@name='sales']" position="inside">
+                <!--
+                    Surface only the per-product driver field that
+                    matches the linked excise type's unit_basis. The
+                    tax engine ignores the others, so hiding them
+                    avoids confusing data entry.
+
+                    The reduction selector is Kemikalieskatt-specific
+                    (50% / 90% rules from the chemical-tax statute),
+                    so it's only shown for kg-based types.
+                -->
                 <group string="Excise Tax Settings" name="excise_tax_group">
                     <field name="is_excise_taxable"/>
-                    <field name="excise_tax_type_id" 
+                    <field name="excise_tax_type_id"
                            invisible="not is_excise_taxable"
                            required="is_excise_taxable"/>
-                    <field name="net_weight_excise" 
-                           invisible="not is_excise_taxable"/>
-                    <field name="excise_reduction" 
-                           invisible="not is_excise_taxable"
+                    <!--
+                        ``excise_unit_basis`` is a related field on
+                        product.template that mirrors the linked Excise
+                        Type's unit_basis. Loaded invisibly here so the
+                        ``invisible=`` expressions on the driver fields
+                        below have a reliably-fetched value to test
+                        against (a dotted ``excise_tax_type_id.unit_basis``
+                        works in some Odoo versions but not all —
+                        the related-field shortcut is portable).
+
+                        Visibility rules: when no Excise Tax Type is
+                        selected yet (excise_unit_basis is False) we
+                        default to the legacy kg-style display so the
+                        form is usable while the user picks a type.
+                        Once a type is picked we narrow to the field
+                        matching its Unit Basis.
+                    -->
+                    <field name="excise_unit_basis" invisible="1"/>
+                    <field name="excise_has_reduction_levels" invisible="1"/>
+                    <field name="net_weight_excise"
+                           invisible="not is_excise_taxable
+                                      or excise_unit_basis == 'liter'"/>
+                    <field name="excise_volume_litres"
+                           invisible="not is_excise_taxable
+                                      or excise_unit_basis != 'liter'"/>
+                    <!--
+                        The Reduction Level radio is Kemikalieskatt-
+                        specific (50%/90% reductions for products
+                        without certain flame-retardants). Other
+                        excise regimes don't have this scheme — even
+                        kg-based ones like Nikotinskatt 'Övriga
+                        produkter'. Gate on the explicit
+                        ``has_reduction_levels`` flag rather than on
+                        unit_basis.
+                    -->
+                    <field name="excise_reduction"
+                           invisible="not is_excise_taxable
+                                      or not excise_has_reduction_levels"
                            widget="radio"/>
                 </group>
             </xpath>
@@ -27,6 +71,8 @@
         <field name="arch" type="xml">
             <list editable="bottom">
                 <field name="name"/>
+                <field name="country_id" optional="show"/>
+                <field name="unit_basis"/>
                 <field name="tax_rate"/>
                 <field name="max_limit"/>
             </list>
@@ -46,10 +92,12 @@
                         </h1>
                     </div>
                     <group>
-                        <group string="Rate">
-                            <field name="tax_rate"/>
+                        <group string="Scope">
+                            <field name="country_id"/>
+                            <field name="unit_basis"/>
                         </group>
-                        <group string="Cap">
+                        <group string="Rate &amp; Cap">
+                            <field name="tax_rate"/>
                             <field name="max_limit"/>
                         </group>
                     </group>
@@ -58,9 +106,15 @@
                         taxed with an <em>account.tax</em> of type
                         <code>Swedish Excise Tax</code> linked to this record,
                         the excise amount per unit is
-                        <code>net_weight_excise &#215; tax_rate</code>,
-                        capped at <code>max_limit</code> and then multiplied
-                        by the line's reduction factor (100% / 50% / 10%).
+                        <code>quantity &#215; tax_rate</code>, where
+                        <em>quantity</em> is the per-product field matching
+                        the chosen <strong>Unit Basis</strong>:
+                        <code>net_weight_excise</code> for kg, or
+                        <code>excise_volume_litres</code> for liter.
+                        For kg-based taxes the result is also
+                        capped at <code>max_limit</code> per unit and
+                        multiplied by the per-line reduction factor
+                        (Kemikalieskatt's 100% / 50% / 10% rule).
                     </div>
                 </sheet>
             </form>

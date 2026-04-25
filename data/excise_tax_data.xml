@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data noupdate="1">
+    <data noupdate="1
+    
+    
+    ">
 
         <!--
             Dedicated tax group so Odoo's tax_totals widget renders the
@@ -42,19 +45,100 @@
 
         <!--
             ============================================================
-            Excise Tax Types (rate + cap)
+            Skatteverket reporting tags — Nikotinskatt
             ============================================================
+        -->
+        <record id="tag_nicotine_tax_base_invoice" model="account.account.tag">
+            <field name="name">+Nikotinskatt - Underlag</field>
+            <field name="applicability">taxes</field>
+            <field name="country_id" ref="base.se"/>
+        </record>
+        <record id="tag_nicotine_tax_tax_invoice" model="account.account.tag">
+            <field name="name">+Nikotinskatt - Skatt att betala</field>
+            <field name="applicability">taxes</field>
+            <field name="country_id" ref="base.se"/>
+        </record>
+        <record id="tag_nicotine_tax_base_refund" model="account.account.tag">
+            <field name="name">-Nikotinskatt - Underlag</field>
+            <field name="applicability">taxes</field>
+            <field name="country_id" ref="base.se"/>
+        </record>
+        <record id="tag_nicotine_tax_tax_refund" model="account.account.tag">
+            <field name="name">-Nikotinskatt - Skatt att betala</field>
+            <field name="applicability">taxes</field>
+            <field name="country_id" ref="base.se"/>
+        </record>
+
+        <!--
+            ============================================================
+            Excise Tax Types (rate + cap + unit_basis)
+            ============================================================
+            Kemikalieskatt rates updated to the 2026-01-01 Skatteverket
+            values:
+              * Electronics (High Rate): 180.71 SEK/kg (was 114.00)
+              * Major Appliances (Low Rate): 12.42 SEK/kg (was 11.00)
+              * Max cap per unit: 552.27 SEK (was 562.00)
+            See migrations/19.0.2.0.0/post-migration.py for the
+            equivalent SQL update on already-installed databases (the
+            data file is noupdate=1).
         -->
         <record id="excise_type_electronics" model="excise.tax.type">
             <field name="name">Electronics (High Rate)</field>
-            <field name="tax_rate">114.0</field>
-            <field name="max_limit">562.0</field>
+            <field name="country_id" ref="base.se"/>
+            <field name="unit_basis">kg</field>
+            <field name="tax_rate">180.71</field>
+            <field name="max_limit">552.27</field>
+            <field name="has_reduction_levels" eval="True"/>
         </record>
 
         <record id="excise_type_major_appliances" model="excise.tax.type">
             <field name="name">Major Appliances (Low Rate)</field>
-            <field name="tax_rate">11.0</field>
-            <field name="max_limit">562.0</field>
+            <field name="country_id" ref="base.se"/>
+            <field name="unit_basis">kg</field>
+            <field name="tax_rate">12.42</field>
+            <field name="max_limit">552.27</field>
+            <field name="has_reduction_levels" eval="True"/>
+        </record>
+
+        <!--
+            ============================================================
+            Nikotinskatt — Excise Tax Types (2026 rates per Skatteverket)
+            ============================================================
+            * E-vätska (regular)              2 020,00 SEK/L
+            * E-vätska (högkoncentrerad)      4 040,00 SEK/L
+            * Övriga nikotinhaltiga produkter   202,00 SEK/kg
+            "Högkoncentrerad" follows the threshold defined in
+            Lag (2018:696) — typically nicotine concentration above the
+            limit set for general retail. The accountant assigns the
+            relevant tax type per product based on the product's
+            classification.
+
+            No max_limit on these (no per-unit cap in the nicotine
+            statute), and no reduction (Kemikalieskatt's 50 % / 90 %
+            rule doesn't apply here).
+        -->
+        <record id="excise_type_nicotine_eliquid" model="excise.tax.type">
+            <field name="name">Nicotine — E-liquid (regular)</field>
+            <field name="country_id" ref="base.se"/>
+            <field name="unit_basis">liter</field>
+            <field name="tax_rate">2020.00</field>
+            <field name="max_limit">0.0</field>
+        </record>
+
+        <record id="excise_type_nicotine_eliquid_high" model="excise.tax.type">
+            <field name="name">Nicotine — E-liquid (high concentration)</field>
+            <field name="country_id" ref="base.se"/>
+            <field name="unit_basis">liter</field>
+            <field name="tax_rate">4040.00</field>
+            <field name="max_limit">0.0</field>
+        </record>
+
+        <record id="excise_type_nicotine_other" model="excise.tax.type">
+            <field name="name">Nicotine — Other products (per kg)</field>
+            <field name="country_id" ref="base.se"/>
+            <field name="unit_basis">kg</field>
+            <field name="tax_rate">202.00</field>
+            <field name="max_limit">0.0</field>
         </record>
 
         <!--
@@ -152,6 +236,136 @@
                     'factor_percent': 100,
                     'use_in_tax_closing': True,
                     'tag_ids': [(6, 0, [ref('tag_chem_tax_tax_refund')])],
+                }),
+            ]"/>
+        </record>
+
+        <!--
+            ============================================================
+            Nikotinskatt — Account Taxes
+            ============================================================
+            Three records, one per excise type. Same plumbing as the
+            Kemikalieskatt records above (sequence=0,
+            include_base_amount=True, swedish_excise amount type).
+            Posting account is bound by ``hooks.post_init_hook`` to
+            BAS 2640 (Övriga punktskatter) → 2980 if 2640 is missing.
+        -->
+        <record id="tax_nicotine_eliquid" model="account.tax">
+            <field name="name">NIK E-V</field>
+            <field name="type_tax_use">sale</field>
+            <field name="amount_type">swedish_excise</field>
+            <field name="amount">0.0</field>
+            <field name="include_base_amount" eval="True"/>
+            <field name="sequence">0</field>
+            <field name="description">Nicotine Tax (E-liquid)</field>
+            <field name="excise_type_id" ref="excise_type_nicotine_eliquid"/>
+            <field name="tax_group_id" ref="tax_group_excise"/>
+            <field name="invoice_repartition_line_ids" eval="[
+                (5, 0, 0),
+                (0, 0, {
+                    'repartition_type': 'base',
+                    'factor_percent': 100,
+                    'tag_ids': [(6, 0, [ref('tag_nicotine_tax_base_invoice')])],
+                }),
+                (0, 0, {
+                    'repartition_type': 'tax',
+                    'factor_percent': 100,
+                    'use_in_tax_closing': True,
+                    'tag_ids': [(6, 0, [ref('tag_nicotine_tax_tax_invoice')])],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[
+                (5, 0, 0),
+                (0, 0, {
+                    'repartition_type': 'base',
+                    'factor_percent': 100,
+                    'tag_ids': [(6, 0, [ref('tag_nicotine_tax_base_refund')])],
+                }),
+                (0, 0, {
+                    'repartition_type': 'tax',
+                    'factor_percent': 100,
+                    'use_in_tax_closing': True,
+                    'tag_ids': [(6, 0, [ref('tag_nicotine_tax_tax_refund')])],
+                }),
+            ]"/>
+        </record>
+
+        <record id="tax_nicotine_eliquid_high" model="account.tax">
+            <field name="name">NIK E-V H</field>
+            <field name="type_tax_use">sale</field>
+            <field name="amount_type">swedish_excise</field>
+            <field name="amount">0.0</field>
+            <field name="include_base_amount" eval="True"/>
+            <field name="sequence">0</field>
+            <field name="description">Nicotine Tax (E-liquid, high concentration)</field>
+            <field name="excise_type_id" ref="excise_type_nicotine_eliquid_high"/>
+            <field name="tax_group_id" ref="tax_group_excise"/>
+            <field name="invoice_repartition_line_ids" eval="[
+                (5, 0, 0),
+                (0, 0, {
+                    'repartition_type': 'base',
+                    'factor_percent': 100,
+                    'tag_ids': [(6, 0, [ref('tag_nicotine_tax_base_invoice')])],
+                }),
+                (0, 0, {
+                    'repartition_type': 'tax',
+                    'factor_percent': 100,
+                    'use_in_tax_closing': True,
+                    'tag_ids': [(6, 0, [ref('tag_nicotine_tax_tax_invoice')])],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[
+                (5, 0, 0),
+                (0, 0, {
+                    'repartition_type': 'base',
+                    'factor_percent': 100,
+                    'tag_ids': [(6, 0, [ref('tag_nicotine_tax_base_refund')])],
+                }),
+                (0, 0, {
+                    'repartition_type': 'tax',
+                    'factor_percent': 100,
+                    'use_in_tax_closing': True,
+                    'tag_ids': [(6, 0, [ref('tag_nicotine_tax_tax_refund')])],
+                }),
+            ]"/>
+        </record>
+
+        <record id="tax_nicotine_other" model="account.tax">
+            <field name="name">NIK ÖVR</field>
+            <field name="type_tax_use">sale</field>
+            <field name="amount_type">swedish_excise</field>
+            <field name="amount">0.0</field>
+            <field name="include_base_amount" eval="True"/>
+            <field name="sequence">0</field>
+            <field name="description">Nicotine Tax (Other products, per kg)</field>
+            <field name="excise_type_id" ref="excise_type_nicotine_other"/>
+            <field name="tax_group_id" ref="tax_group_excise"/>
+            <field name="invoice_repartition_line_ids" eval="[
+                (5, 0, 0),
+                (0, 0, {
+                    'repartition_type': 'base',
+                    'factor_percent': 100,
+                    'tag_ids': [(6, 0, [ref('tag_nicotine_tax_base_invoice')])],
+                }),
+                (0, 0, {
+                    'repartition_type': 'tax',
+                    'factor_percent': 100,
+                    'use_in_tax_closing': True,
+                    'tag_ids': [(6, 0, [ref('tag_nicotine_tax_tax_invoice')])],
+                }),
+            ]"/>
+            <field name="refund_repartition_line_ids" eval="[
+                (5, 0, 0),
+                (0, 0, {
+                    'repartition_type': 'base',
+                    'factor_percent': 100,
+                    'tag_ids': [(6, 0, [ref('tag_nicotine_tax_base_refund')])],
+                }),
+                (0, 0, {
+                    'repartition_type': 'tax',
+                    'factor_percent': 100,
+                    'use_in_tax_closing': True,
+                    'tag_ids': [(6, 0, [ref('tag_nicotine_tax_tax_refund')])],
                 }),
             ]"/>
         </record>

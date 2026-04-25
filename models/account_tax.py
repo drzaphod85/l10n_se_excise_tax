@@ -23,17 +23,30 @@ class AccountTax(models.Model):
     # the linked excise type without forcing the accountant to open a
     # second form. Both are `related` so edits are pushed back onto the
     # excise.tax.type record.
+    excise_unit_basis_display = fields.Selection(
+        related='excise_type_id.unit_basis',
+        string="Unit Basis",
+        readonly=True,
+        help="Unit the rate is expressed per. Driven by the linked "
+             "Excise Type. ``kg`` reads the product's excise weight; "
+             "``liter`` reads its excise volume.",
+    )
     excise_rate_display = fields.Float(
         related='excise_type_id.tax_rate',
-        string="Rate (SEK/kg)",
+        string="Rate (SEK / unit)",
         readonly=False,
         digits=(12, 2),
+        help="Rate per unit_basis unit. SEK per kg for kg-based "
+             "taxes (Kemikalieskatt), SEK per litre for liter-based "
+             "taxes (Nikotinskatt e-liquid).",
     )
     excise_max_limit_display = fields.Float(
         related='excise_type_id.max_limit',
         string="Max Limit per Unit (SEK)",
         readonly=False,
         digits=(12, 2),
+        help="Per-unit cap. Used by Kemikalieskatt only; 0 for any "
+             "non-capped excise type.",
     )
 
     # Posting Setup summary – surfaced on the excise block of the tax
@@ -71,23 +84,62 @@ class AccountTax(models.Model):
             tax.excise_posting_tags = ', '.join(all_tags.mapped('name')) or False
 
     # ------------------------------------------------------------------
-    # Excise computation helper
+    # Excise computation helpers
     # ------------------------------------------------------------------
-    def _get_excise_unit_amount(self, weight, reduction_ratio):
+    def _get_excise_unit_amount(self, weight=0.0, reduction_ratio=1.0,
+                                volume=0.0):
         """Return the excise amount for a SINGLE unit of product.
 
-        :param float weight:          Snapshot net weight (kg) for excise.
-        :param float reduction_ratio: 1.0 / 0.5 / 0.1 reduction factor.
-        :return float: Per-unit excise amount in company currency (SEK).
+        Dispatches on ``self.excise_type_id.unit_basis``:
+
+        * ``'kg'``    — weight × rate, capped at ``max_limit``,
+                       multiplied by ``reduction_ratio``.
+        * ``'liter'`` — volume × rate (no cap, no reduction in the
+                       current Phase-2a scope; nicotine doesn't use
+                       either).
+
+        Future ``unit_basis`` values (``'tonne'``, ``'liter_pure'``,
+        ``'pcs'``, …) get their own branches as the corresponding
+        Phase-2/3/4 taxes are implemented.
+
+        :param float weight:          Snapshot net weight (kg) for kg-based.
+        :param float reduction_ratio: 1.0 / 0.5 / 0.1 (kg-based only).
+        :param float volume:          Snapshot volume (L) for liter-based.
+        :return float: Per-unit excise amount in company currency.
         """
         self.ensure_one()
         excise = self.excise_type_id
-        if not excise or weight <= 0.0:
+        if not excise:
             return 0.0
-        raw_tax = weight * excise.tax_rate
-        if excise.max_limit > 0 and raw_tax > excise.max_limit:
-            raw_tax = excise.max_limit
-        return raw_tax * (reduction_ratio or 1.0)
+        basis = excise.unit_basis or 'kg'
+
+        if basis == 'kg':
+            if weight <= 0.0:
+                return 0.0
+            raw_tax = weight * excise.tax_rate
+            if excise.max_limit > 0 and raw_tax > excise.max_limit:
+                raw_tax = excise.max_limit
+            # Reduction is Kemikalieskatt-specific. Excise types that
+            # don't enable ``has_reduction_levels`` (e.g. Nikotinskatt
+            # 'Övriga produkter' which is also kg-based) ignore the
+            # ratio entirely — multiplying by 1.0 keeps the snapshot
+            # field on the line harmless even if a user accidentally
+            # set a reduction on the product.
+            if excise.has_reduction_levels:
+                return raw_tax * (reduction_ratio or 1.0)
+            return raw_tax
+
+        if basis == 'liter':
+            if volume <= 0.0:
+                return 0.0
+            return volume * excise.tax_rate
+
+        # Unknown / not-yet-supported basis — return 0 so that
+        # adding a new selection value before its computation
+        # branch lands doesn't silently miscompute. The value is
+        # stored in tax_data['tax_amount']=0 and the cascade still
+        # fires (with 0), which is harmless.
+        return 0.0
 
     # ------------------------------------------------------------------
     # New-engine hook (Odoo 17+ tax engine)
@@ -96,10 +148,10 @@ class AccountTax(models.Model):
         """Extend the fixed-amount evaluator so it also handles our
         custom ``amount_type='swedish_excise'``.
 
-        The per-line snapshot (``excise_weight`` /
-        ``excise_reduction_ratio``) is propagated through the tax
-        recordset's context by the overrides on ``sale.order.line`` /
-        ``account.move.line`` — they call
+        The per-line snapshot (``excise_weight`` / ``excise_volume``
+        / ``excise_reduction_ratio``) is propagated through the tax
+        recordset's context by the overrides on ``sale.order.line``
+        / ``account.move.line`` — they call
         ``base_line['tax_ids'].with_context(excise_line_vals=...)``,
         and that context is carried here on ``self``.
 
@@ -107,12 +159,21 @@ class AccountTax(models.Model):
         value from multiple passes makes the engine's cascade-into-
         next-tax-base logic fire more than once for the same tax,
         which would over-augment the VAT base.
+
+        The actual unit-basis dispatch happens inside
+        ``_get_excise_unit_amount``; this hook just unpacks the
+        per-line snapshot from context and applies the line's
+        quantity and sign.
         """
         if self.amount_type == 'swedish_excise':
             excise_vals = self.env.context.get('excise_line_vals') or {}
-            weight = excise_vals.get('excise_weight', 0.0) or 0.0
-            reduction = excise_vals.get('excise_reduction_ratio', 1.0) or 1.0
-            unit_amount = self._get_excise_unit_amount(weight, reduction)
+            unit_amount = self._get_excise_unit_amount(
+                weight=excise_vals.get('excise_weight', 0.0) or 0.0,
+                volume=excise_vals.get('excise_volume', 0.0) or 0.0,
+                reduction_ratio=(
+                    excise_vals.get('excise_reduction_ratio', 1.0) or 1.0
+                ),
+            )
             sign = -1 if evaluation_context.get('price_unit', 0.0) < 0.0 else 1
             quantity = evaluation_context.get('quantity', 0.0) or 0.0
             return sign * quantity * unit_amount
