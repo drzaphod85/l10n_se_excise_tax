@@ -93,14 +93,20 @@ class AccountTax(models.Model):
     # New-engine hook (Odoo 17+ tax engine)
     # ------------------------------------------------------------------
     def _eval_tax_amount_fixed_amount(self, batch, raw_base, evaluation_context):
-        """Extend the ascending-pass fixed-amount evaluator so it also
-        handles our custom ``amount_type='swedish_excise'``.
+        """Extend the fixed-amount evaluator so it also handles our
+        custom ``amount_type='swedish_excise'``.
 
-        The per-line snapshot (``excise_weight`` / ``excise_reduction_ratio``)
-        is propagated through the tax recordset's context by the overrides
-        on ``sale.order.line`` and ``account.move.line`` — they call
-        ``base_line['tax_ids'].with_context(excise_line_vals=...)``, and
-        that context is carried here on ``self``.
+        The per-line snapshot (``excise_weight`` /
+        ``excise_reduction_ratio``) is propagated through the tax
+        recordset's context by the overrides on ``sale.order.line`` /
+        ``account.move.line`` — they call
+        ``base_line['tax_ids'].with_context(excise_line_vals=...)``,
+        and that context is carried here on ``self``.
+
+        Only this single pass is overridden, on purpose: returning a
+        value from multiple passes makes the engine's cascade-into-
+        next-tax-base logic fire more than once for the same tax,
+        which would over-augment the VAT base.
         """
         if self.amount_type == 'swedish_excise':
             excise_vals = self.env.context.get('excise_line_vals') or {}
@@ -125,32 +131,43 @@ class AccountTax(models.Model):
     # ------------------------------------------------------------------
     @api.model
     def _l10n_se_excise_postprocess_tax_totals(
-        self, totals, *, fold_excise=False, hide_vat=False,
+        self, totals, *, fold_excise=False,
     ):
-        """Return ``totals`` filtered according to the two display
-        flags that the caller has derived for the current document.
+        """Return ``totals`` with the excise group folded into the
+        Untaxed Amount when ``fold_excise`` is True.
 
         * ``fold_excise`` → drop the excise tax group from the visible
-          breakdown and add its amount to the Untaxed Amount line so
-          the numbers still add up.
-        * ``hide_vat`` → drop every non-excise tax group (typically
-          VAT / moms) from the visible breakdown. The total is left
-          as-is because VAT is still charged and posted — only the
-          *row* disappears.
+          breakdown and bump the Untaxed Amount by the same amount
+          so the customer sees a coherent "Untaxed (X+E) → VAT →
+          Total" block. The VAT group stays visible in every case
+          because the VAT base is ``X+E`` (excise has
+          ``include_base_amount=True``) and the law requires the
+          totals block to disclose the VAT amount separately.
 
-        The two flags are passed in by the caller rather than read
-        from the company here, because ``sale.order`` and
-        ``account.move`` have different policies: a final invoice
-        must always show the VAT row per Mervärdesskattelagen 11 kap.
-        8 §, while quotations have no such disclosure requirement.
+        The per-line presentation is a separate concern:
+        ``sale.order.line`` / ``account.move.line`` expose
+        ``l10n_se_display_price_subtotal`` and the QWeb inherits in
+        ``views/report_templates.xml`` render it instead of
+        ``price_subtotal`` on the Amount column when fold is on.
+        ``hide_vat_column_on_documents`` is handled purely in the
+        QWeb inherits — it does not touch ``tax_totals``.
 
         The method tolerates both tax_totals shapes seen across
         Odoo 17 / 18 / 19: the newer ``subtotals[*].tax_groups[*]``
         nesting and the older ``groups_by_subtotal[name][*]`` mapping.
+
+        Implementation note on subtotal pruning: when cascading taxes
+        (excise with ``include_base_amount=True`` + VAT) are active,
+        Odoo builds two subtotal "steps", one per tax stage. Removing
+        the excise group empties the first step; left in place that
+        empty step still renders as a phantom "Subtotal:" row in the
+        widget with no taxes after it, which made the VAT row look
+        like it had vanished. We therefore drop empty subtotal
+        entries altogether so the next populated subtotal (containing
+        VAT) is what the widget renders immediately after Untaxed
+        Amount.
         """
-        if not isinstance(totals, dict):
-            return totals
-        if not (fold_excise or hide_vat):
+        if not isinstance(totals, dict) or not fold_excise:
             return totals
 
         excise_group = self.env.ref(
@@ -158,10 +175,12 @@ class AccountTax(models.Model):
             raise_if_not_found=False,
         )
         excise_group_id = excise_group.id if excise_group else None
+        if not excise_group_id:
+            return totals
 
         def _is_excise(group_dict):
             gid = group_dict.get('id') or group_dict.get('tax_group_id')
-            return excise_group_id and gid == excise_group_id
+            return gid == excise_group_id
 
         def _amount(group_dict):
             # Pick whichever amount key the current Odoo version uses.
@@ -175,51 +194,97 @@ class AccountTax(models.Model):
         new_totals = copy.deepcopy(totals)
         folded_amount = 0.0
 
+        # Keys Odoo 19's tax_totals widget reads for the displayed
+        # base / tax / total amounts. The empirically-observed JSON
+        # uses ``base_amount`` / ``tax_amount`` / ``total_amount``
+        # plus the matching ``_currency`` variants. Earlier Odoo
+        # versions used ``amount_untaxed`` / ``amount_tax`` /
+        # ``amount_total``, which we keep in the lists below as a
+        # fallback for compatibility.
+        BASE_KEYS = ('base_amount', 'base_amount_currency',
+                     'amount_untaxed')
+        TAX_KEYS = ('tax_amount', 'tax_amount_currency',
+                    'amount_tax')
+
         # Newer shape: subtotals[*].tax_groups[*].
-        for subtotal in new_totals.get('subtotals') or []:
-            kept = []
-            for group in subtotal.get('tax_groups') or []:
-                if fold_excise and _is_excise(group):
-                    folded_amount += _amount(group)
-                    continue
-                if hide_vat and not _is_excise(group):
-                    continue
-                kept.append(group)
-            if 'tax_groups' in subtotal:
-                subtotal['tax_groups'] = kept
+        # We rebuild the subtotals list, dropping entries whose
+        # tax_groups become empty after filtering — see docstring.
+        raw_subtotals = new_totals.get('subtotals')
+        if isinstance(raw_subtotals, list):
+            new_subtotals = []
+            for subtotal in raw_subtotals:
+                kept = []
+                subtotal_folded = 0.0
+                for group in subtotal.get('tax_groups') or []:
+                    if _is_excise(group):
+                        amount = _amount(group)
+                        folded_amount += amount
+                        subtotal_folded += amount
+                        continue
+                    kept.append(group)
+                if 'tax_groups' in subtotal:
+                    subtotal['tax_groups'] = kept
+                # Bump this subtotal's "base" by the folded excise
+                # and reduce its "tax" by the same amount, so that
+                # base + tax (the running total at this subtotal
+                # level) stays unchanged. The displayed
+                # "Summa exkl. moms" row is rendered from
+                # ``subtotal.base_amount[_currency]``; without this
+                # bump it stays at the pre-excise net subtotal.
+                if subtotal_folded:
+                    for key in BASE_KEYS:
+                        if key in subtotal:
+                            subtotal[key] = subtotal[key] + subtotal_folded
+                    for key in TAX_KEYS:
+                        if key in subtotal:
+                            subtotal[key] = subtotal[key] - subtotal_folded
+                    # Drop pre-formatted strings so the widget
+                    # re-renders from the bumped numeric fields.
+                    for stale in ('formatted_amount', 'formatted_base_amount',
+                                  'formatted_base_amount_currency',
+                                  'formatted_tax_amount',
+                                  'formatted_tax_amount_currency'):
+                        subtotal.pop(stale, None)
+                if kept:
+                    new_subtotals.append(subtotal)
+            new_totals['subtotals'] = new_subtotals
 
         # Older shape: groups_by_subtotal[name] = [groups].
+        # Same pruning logic; empty subtotal buckets get removed.
         gbs = new_totals.get('groups_by_subtotal')
         if isinstance(gbs, dict):
+            count_here = not isinstance(raw_subtotals, list)
             for name, groups in list(gbs.items()):
                 kept = []
                 for group in groups:
-                    if fold_excise and _is_excise(group):
-                        folded_amount += _amount(group)
-                        continue
-                    if hide_vat and not _is_excise(group):
+                    if _is_excise(group):
+                        if count_here:
+                            folded_amount += _amount(group)
                         continue
                     kept.append(group)
-                gbs[name] = kept
+                if kept:
+                    gbs[name] = kept
+                else:
+                    del gbs[name]
 
-        # If we folded excise into untaxed, bump the visible Untaxed
-        # Amount so the customer-facing numbers still add up (total
-        # stays identical because excise was already included in it).
-        if fold_excise and folded_amount:
-            if 'amount_untaxed' in new_totals:
-                new_totals['amount_untaxed'] = (
-                    new_totals['amount_untaxed'] + folded_amount
-                )
-            # Drop stale pre-formatted values so the widget re-renders
-            # the numeric field we just updated.
-            new_totals.pop('formatted_amount_untaxed', None)
-
-            for subtotal in new_totals.get('subtotals') or []:
-                for key in ('amount', 'base_amount', 'base_amount_currency'):
-                    if key in subtotal:
-                        subtotal[key] = subtotal[key] + folded_amount
-                subtotal.pop('formatted_amount', None)
-                subtotal.pop('formatted_base_amount', None)
-                break  # only the first (Untaxed Amount) subtotal
+        # Bump the top-level base by the folded excise and reduce
+        # the top-level tax by the same amount. ``total_amount`` /
+        # ``amount_total`` are intentionally NOT touched — they were
+        # already correct (excise was always part of the total) and
+        # keeping them constant is what makes the widget's math
+        # consistent: base + tax = total still holds.
+        if folded_amount:
+            for key in BASE_KEYS:
+                if key in new_totals:
+                    new_totals[key] = new_totals[key] + folded_amount
+            for key in TAX_KEYS:
+                if key in new_totals:
+                    new_totals[key] = new_totals[key] - folded_amount
+            for stale in ('formatted_amount_untaxed',
+                          'formatted_base_amount',
+                          'formatted_base_amount_currency',
+                          'formatted_tax_amount',
+                          'formatted_tax_amount_currency'):
+                new_totals.pop(stale, None)
 
         return new_totals

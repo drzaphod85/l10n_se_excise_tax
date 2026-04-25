@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Add the "Approved Warehouse Keeper" toggle to the partner form.
+        Anchored under the existing fiscal_information group on the
+        Sales & Purchase tab so it sits next to the Fiscal Position
+        and other tax-related partner settings.
+    -->
+    <record id="view_partner_form_l10n_se_excise_inherit"
+            model="ir.ui.view">
+        <field name="name">res.partner.form.l10n_se_excise.inherit</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="account.view_partner_property_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='fiscal_information']"
+                   position="inside">
+                <field name="l10n_se_approved_warehouse_keeper"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

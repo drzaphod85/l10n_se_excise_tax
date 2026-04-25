@@ -27,15 +27,15 @@ class ResCompany(models.Model):
              "line (the VAT base and the total stay identical).",
     )
 
-    hide_vat_row_on_quotations = fields.Boolean(
-        string="Hide VAT Row on Quotations",
+    hide_vat_column_on_documents = fields.Boolean(
+        string="Hide VAT Column on Documents",
         default=False,
-        help="Hide the VAT / moms row in the totals block of "
-             "quotations and sales orders (on-screen widget, PDF and "
-             "customer portal). Useful for B2C price presentation "
-             "before an invoice is issued. Posted invoices always "
-             "show the VAT row regardless of this setting, as "
-             "Mervärdesskattelagen 11 kap. 8 § requires a final "
-             "invoice to disclose the VAT amount and rate separately. "
-             "VAT is still calculated and posted in the background.",
+        help="Hide the per-line VAT / Moms / Taxes column (the one "
+             "showing labels like '25% G, CHEM E') on quotations, "
+             "sales orders and invoices when rendered as PDF or on "
+             "the customer portal. The VAT row in the totals block "
+             "stays visible in every case so the statutory VAT "
+             "amount and rate are still disclosed. On the order / "
+             "invoice form views the column is always visible but "
+             "can be toggled from the column picker as usual.",
     )

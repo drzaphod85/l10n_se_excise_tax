@@ -35,27 +35,28 @@
                         <field name="excise_show_as_separate_row"/>
                     </setting>
 
-                    <setting id="l10n_se_hide_vat_row_setting"
-                             title="Hide VAT Row on Quotations"
-                             help="Hide the VAT row in the totals
-                                   block of quotations and sales
-                                   orders (screen, PDF and portal).
-                                   Useful for B2C price presentation
-                                   before an invoice is issued.
-                                   Posted invoices always show VAT,
-                                   as required by Mervärdesskattelagen
-                                   11 kap. 8 §.">
-                        <field name="hide_vat_row_on_quotations"/>
+                    <setting id="l10n_se_hide_vat_column_setting"
+                             title="Hide VAT Column on Documents"
+                             help="Hide the Moms / VAT / Taxes
+                                   column from the line table on
+                                   quotation PDFs, order PDFs,
+                                   invoice PDFs and the customer
+                                   portal. The column is still
+                                   available on the internal form
+                                   view (toggle it via the column
+                                   picker if you don't want to see
+                                   it there either).">
+                        <field name="hide_vat_column_on_documents"/>
                         <div class="text-muted mt8"
-                             invisible="not hide_vat_row_on_quotations">
+                             invisible="not hide_vat_column_on_documents">
                             <small>
                                 <i class="fa fa-info-circle"/>
-                                Applies to quotations and sales orders
-                                only. Invoices (<em>account.move</em>)
-                                continue to display the VAT row so
-                                the statutory disclosure required by
-                                <em>Mervärdesskattelagen 11 kap. 8 §</em>
-                                is respected.
+                                Only the per-line Moms column is
+                                hidden. The VAT amount and rate
+                                still appear in the totals block on
+                                every document, so the Swedish
+                                invoice disclosure requirement is
+                                preserved.
                             </small>
                         </div>
                     </setting>

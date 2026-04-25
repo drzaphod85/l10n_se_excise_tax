@@ -14,7 +14,7 @@ class ResConfigSettings(models.TransientModel):
         related='company_id.excise_show_as_separate_row',
         readonly=False,
     )
-    hide_vat_row_on_quotations = fields.Boolean(
-        related='company_id.hide_vat_row_on_quotations',
+    hide_vat_column_on_documents = fields.Boolean(
+        related='company_id.hide_vat_column_on_documents',
         readonly=False,
     )

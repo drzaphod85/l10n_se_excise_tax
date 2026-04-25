@@ -482,28 +482,28 @@ msgstr ""
 "och totalbeloppet är oförändrade)."
 
 #. module: l10n_se_excise_tax
-#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_res_company__hide_vat_row_on_quotations
-#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_res_config_settings__hide_vat_row_on_quotations
-msgid "Hide VAT Row on Quotations"
-msgstr "Dölj momsraden på offerter"
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_res_company__hide_vat_column_on_documents
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_res_config_settings__hide_vat_column_on_documents
+msgid "Hide VAT Column on Documents"
+msgstr "Dölj momskolumnen i dokument"
 
 #. module: l10n_se_excise_tax
-#: model:ir.model.fields,help:l10n_se_excise_tax.field_res_company__hide_vat_row_on_quotations
-#: model:ir.model.fields,help:l10n_se_excise_tax.field_res_config_settings__hide_vat_row_on_quotations
+#: model:ir.model.fields,help:l10n_se_excise_tax.field_res_company__hide_vat_column_on_documents
+#: model:ir.model.fields,help:l10n_se_excise_tax.field_res_config_settings__hide_vat_column_on_documents
 msgid ""
-"Hide the VAT / moms row in the totals block of quotations and sales orders "
-"(on-screen widget, PDF and customer portal). Useful for B2C price "
-"presentation before an invoice is issued. Posted invoices always show the "
-"VAT row regardless of this setting, as Mervärdesskattelagen 11 kap. 8 § "
-"requires a final invoice to disclose the VAT amount and rate separately. "
-"VAT is still calculated and posted in the background."
+"Hide the per-line VAT / Moms / Taxes column (the one showing labels like "
+"'25% G, CHEM E') on quotations, sales orders and invoices when rendered as "
+"PDF or on the customer portal. The VAT row in the totals block stays "
+"visible in every case so the statutory VAT amount and rate are still "
+"disclosed. On the order / invoice form views the column is always visible "
+"but can be toggled from the column picker as usual."
 msgstr ""
-"Dölj rader för moms i totalblocket på offerter och kundorder (visning på "
-"skärm, PDF och kundportal). Användbart för B2C-prisvisning innan en faktura "
-"utfärdas. Bokförda fakturor visar alltid momsraden oavsett denna "
-"inställning, eftersom Mervärdesskattelagen 11 kap. 8 § kräver att en "
-"slutgiltig faktura redovisar momsens belopp och sats separat. Momsen "
-"beräknas och bokförs fortfarande i bakgrunden."
+"Dölj kolumnen Moms / Skatt per rad (den som visar etiketter som "
+"”25 % G, CHEM E”) på offerter, kundorder och fakturor när de renderas som "
+"PDF eller visas i kundportalen. Momsraden i totalblocket visas alltid, så "
+"det lagstadgade momsbeloppet och momssatsen redovisas fortfarande. I "
+"order- och fakturaformulären är kolumnen alltid synlig men kan döljas via "
+"kolumnväljaren som vanligt."
 
 # --------------------------------------------------------------------
 # Views – res.config.settings (Accounting settings page)
@@ -521,22 +521,55 @@ msgstr "Visa punktskatt som egen rad"
 
 #. module: l10n_se_excise_tax
 #: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.res_config_settings_view_form_l10n_se_excise_tax
-msgid "Hide VAT Row on Quotations"
-msgstr "Dölj momsraden på offerter"
+msgid "Hide VAT Column on Documents"
+msgstr "Dölj momskolumnen i dokument"
 
 #. module: l10n_se_excise_tax
 #: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.res_config_settings_view_form_l10n_se_excise_tax
 msgid ""
-"Applies to quotations and sales orders\n"
-"                                only. Invoices (<em>account.move</em>)\n"
-"                                continue to display the VAT row so\n"
-"                                the statutory disclosure required by\n"
-"                                <em>Mervärdesskattelagen 11 kap. 8 §</em>\n"
-"                                is respected."
+"Only the per-line Moms column is\n"
+"                                hidden. The VAT amount and rate\n"
+"                                still appear in the totals block on\n"
+"                                every document, so the Swedish\n"
+"                                invoice disclosure requirement is\n"
+"                                preserved."
 msgstr ""
-"Gäller endast offerter och kundorder.\n"
-"                                Fakturor (<em>account.move</em>) visar\n"
-"                                fortfarande momsraden så att den\n"
-"                                lagstadgade redovisningen enligt\n"
-"                                <em>Mervärdesskattelagen 11 kap. 8 §</em>\n"
-"                                respekteras."
+"Endast momskolumnen per rad döljs.\n"
+"                                Momsbeloppet och momssatsen visas\n"
+"                                fortfarande i totalblocket på varje\n"
+"                                dokument, så det svenska kravet på\n"
+"                                fakturauppgifter är uppfyllt."
+
+# --------------------------------------------------------------------
+# res.partner – Approved Warehouse Keeper
+# --------------------------------------------------------------------
+
+#. module: l10n_se_excise_tax
+#: model:ir.model,name:l10n_se_excise_tax.model_res_partner
+msgid "Contact"
+msgstr "Kontakt"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_res_partner__l10n_se_approved_warehouse_keeper
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_res_users__l10n_se_approved_warehouse_keeper
+msgid "Approved Warehouse Keeper"
+msgstr "Godkänd lagerhållare"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,help:l10n_se_excise_tax.field_res_partner__l10n_se_approved_warehouse_keeper
+#: model:ir.model.fields,help:l10n_se_excise_tax.field_res_users__l10n_se_approved_warehouse_keeper
+msgid ""
+"Mark this partner as an Approved Warehouse Keeper (Swedish: 'Godkänd "
+"lagerhållare') — a company registered with Skatteverket to handle excise "
+"goods under deferred duty. When this is enabled, the Swedish chemical "
+"excise tax is NOT computed on quotations or invoices issued to this "
+"partner. The AWK is responsible for declaring and paying the tax "
+"themselves when they sell the goods on to a non-AWK end customer."
+msgstr ""
+"Markera denna kontakt som godkänd lagerhållare — ett företag som är "
+"registrerat hos Skatteverket för att hantera punktskattepliktiga varor "
+"med uppskjuten skatt. När detta är aktiverat beräknas INTE den svenska "
+"kemikalieskatten på offerter eller fakturor som ställs ut till denna "
+"kontakt. Den godkända lagerhållaren ansvarar själv för att deklarera och "
+"betala skatten när varorna säljs vidare till en slutkund som inte är "
+"godkänd lagerhållare."

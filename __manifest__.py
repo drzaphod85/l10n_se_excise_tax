@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Swedish Excise Tax (Chemical Tax)',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.4.0',
     'category': 'Accounting/Localizations',
     'summary': 'Manage chemical taxes and other excise duties applied before VAT.',
     'description': """
 Swedish Excise Tax Management
-============================
+=============================
 This module allows for the calculation of specific excise taxes (like the Swedish Chemical Tax) 
 based on product weight and unit caps. 
 
@@ -26,6 +26,8 @@ Key features:
         'views/account_move_views.xml',
         'views/sale_order_views.xml',
         'views/res_config_settings_views.xml',
+        'views/res_partner_views.xml',
+        'views/report_templates.xml',
     ],
     'installable': True,
     'application': False,

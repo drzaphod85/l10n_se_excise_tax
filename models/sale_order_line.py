@@ -23,6 +23,93 @@ class SaleOrderLine(models.Model):
              "1.0 = full tax, 0.5 = 50% reduction, 0.1 = 90% reduction.",
     )
 
+    # ------------------------------------------------------------------
+    # Display helpers for the "excise folded into the line price" mode.
+    #
+    # When the company flag ``excise_show_as_separate_row`` is OFF, the
+    # QWeb inherits in ``views/report_templates.xml`` render
+    # ``l10n_se_display_price_unit`` and
+    # ``l10n_se_display_price_subtotal`` instead of the raw
+    # ``price_unit`` / ``price_subtotal`` columns. The customer then
+    # sees a self-consistent block where ``Unit Price × Quantity =
+    # Amount`` and the sum of Amounts matches the bumped Untaxed
+    # Amount in the totals block.
+    #
+    # Note: these fields are DISPLAY-only. The record's real
+    # ``price_unit`` and ``price_subtotal`` stay at the net values
+    # — that's what the tax engine and posting use. The excise tax
+    # itself still runs through the engine and posts to its
+    # liability account; only the customer-facing rendering is
+    # adjusted.
+    # ------------------------------------------------------------------
+    excise_unit_amount = fields.Monetary(
+        string="Excise (per unit)",
+        compute='_compute_l10n_se_excise_display',
+        help="Per-unit Swedish excise amount for this line, computed from "
+             "the snapshot weight and reduction ratio. 0 when no excise "
+             "tax is applied.",
+    )
+    l10n_se_display_price_unit = fields.Monetary(
+        string="Unit Price (display)",
+        compute='_compute_l10n_se_excise_display',
+        help="Unit price shown on the customer-facing PDF and portal. "
+             "Equals price_unit when excise is rendered on its own row; "
+             "equals price_unit + per-unit excise when the company has "
+             "folded the excise into the line price.",
+    )
+    l10n_se_display_price_subtotal = fields.Monetary(
+        string="Amount (display)",
+        compute='_compute_l10n_se_excise_display',
+        help="Line Amount shown on the customer-facing PDF and portal. "
+             "Equals price_subtotal when excise is rendered on its own "
+             "row; equals price_subtotal + (qty × per-unit excise) when "
+             "the company has folded the excise into the line price.",
+    )
+
+    @api.depends(
+        'price_unit', 'price_subtotal', 'product_uom_qty',
+        'tax_ids.amount_type', 'tax_ids.excise_type_id',
+        'excise_weight', 'excise_reduction_ratio',
+        'order_id.company_id.excise_show_as_separate_row',
+        'order_id.company_id.country_id',
+        'order_id.partner_id.l10n_se_approved_warehouse_keeper',
+        'order_id.partner_id.country_id',
+    )
+    def _compute_l10n_se_excise_display(self):
+        for line in self:
+            excise_tax = line.tax_ids.filtered(
+                lambda t: t.amount_type == 'swedish_excise'
+            )[:1]
+            per_unit = 0.0
+            if excise_tax:
+                # Skip the per-unit excise on exempt customers (AWK
+                # or foreign) — same gate as the tax-engine hook in
+                # _prepare_base_line_for_taxes_computation.
+                partner = line.order_id.partner_id
+                company = line.order_id.company_id
+                exempt = bool(
+                    partner
+                    and company
+                    and partner._l10n_se_is_excise_exempt(company)
+                )
+                if not exempt:
+                    per_unit = excise_tax._get_excise_unit_amount(
+                        line.excise_weight or 0.0,
+                        line.excise_reduction_ratio or 1.0,
+                    )
+            line.excise_unit_amount = per_unit
+            fold = not (line.order_id.company_id.excise_show_as_separate_row
+                        if line.order_id else True)
+            if fold and per_unit:
+                line_excise = (line.product_uom_qty or 0.0) * per_unit
+                line.l10n_se_display_price_unit = line.price_unit + per_unit
+                line.l10n_se_display_price_subtotal = (
+                    line.price_subtotal + line_excise
+                )
+            else:
+                line.l10n_se_display_price_unit = line.price_unit
+                line.l10n_se_display_price_subtotal = line.price_subtotal
+
     @api.onchange('product_id')
     def _onchange_product_id_excise(self):
         reduction_map = {'0': 1.0, '50': 0.5, '90': 0.1}
@@ -45,22 +132,45 @@ class SaleOrderLine(models.Model):
         dict and into the context of the taxes the engine will iterate,
         so ``account.tax._compute_amount`` can read the weight and
         reduction factor for this specific line.
+
+        Also drops the swedish_excise tax from ``base_line['tax_ids']``
+        when the order's customer is exempt (Approved Warehouse Keeper
+        or based outside the company's country) — that way the tax
+        engine never even sees the excise for them, no 0-kr tax row
+        is generated, and the totals are computed cleanly as if the
+        excise didn't apply at all. The line's stored ``tax_ids``
+        are intentionally left alone — only the tax computation for
+        this base_line is filtered.
         """
         base_line = super()._prepare_base_line_for_taxes_computation(**kwargs)
-        if any(t.amount_type == 'swedish_excise' for t in self.tax_ids):
-            excise_ctx = {
-                'excise_line_vals': {
-                    'excise_weight': self.excise_weight or 0.0,
-                    'excise_reduction_ratio': self.excise_reduction_ratio or 1.0,
-                },
-            }
-            # Propagate the snapshot to the tax recordset that the engine
-            # will call _compute_amount on.
+        excise_taxes = self.tax_ids.filtered(
+            lambda t: t.amount_type == 'swedish_excise'
+        )
+        if not excise_taxes:
+            return base_line
+
+        partner = self.order_id.partner_id
+        company = self.order_id.company_id
+        if partner and partner._l10n_se_is_excise_exempt(company):
             if base_line.get('tax_ids'):
-                base_line['tax_ids'] = base_line['tax_ids'].with_context(**excise_ctx)
-            # Keep the raw values on the base line itself so other
-            # hooks (reports, portal) can access them.
-            base_line.update(excise_ctx['excise_line_vals'])
+                base_line['tax_ids'] = base_line['tax_ids'].filtered(
+                    lambda t: t.amount_type != 'swedish_excise'
+                )
+            return base_line
+
+        excise_ctx = {
+            'excise_line_vals': {
+                'excise_weight': self.excise_weight or 0.0,
+                'excise_reduction_ratio': self.excise_reduction_ratio or 1.0,
+            },
+        }
+        # Propagate the snapshot to the tax recordset that the engine
+        # will call _compute_amount on.
+        if base_line.get('tax_ids'):
+            base_line['tax_ids'] = base_line['tax_ids'].with_context(**excise_ctx)
+        # Keep the raw values on the base line itself so other
+        # hooks (reports, portal) can access them.
+        base_line.update(excise_ctx['excise_line_vals'])
         return base_line
 
     # ------------------------------------------------------------------

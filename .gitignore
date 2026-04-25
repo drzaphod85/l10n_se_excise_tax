@@ -10,3 +10,6 @@ models/__pycache__/
 # Docker files
 .docker
 .dockerignore
+
+CLAUDE.md
+HANDOFF.md

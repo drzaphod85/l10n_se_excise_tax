@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data noupdate="0">
+    <data noupdate="1">
 
         <!--
             Dedicated tax group so Odoo's tax_totals widget renders the
@@ -65,6 +65,16 @@
             the tax amount lands on the correct liability account
             (assigned per company by the post_init_hook) and is tagged
             for the Skatteverket excise declaration.
+
+            sequence=0 (NOT the default 1) is deliberate. The standard
+            Swedish 25 % VAT taxes ship at sequence 1, so anything we
+            want VAT computed *on top of* must sort strictly before
+            them. Odoo's tax engine sorts by (sequence, id); same
+            sequence falls back to id, and our excise tax always gets
+            a higher id (created later by this module than the chart),
+            which would silently put excise *after* VAT and prevent
+            the include_base_amount cascade from forwarding the
+            excise into the VAT base. See HANDOFF section 8.
         -->
         <record id="tax_chemical_electronics" model="account.tax">
             <field name="name">CHEM E</field>
@@ -72,7 +82,7 @@
             <field name="amount_type">swedish_excise</field>
             <field name="amount">0.0</field>
             <field name="include_base_amount" eval="True"/>
-            <field name="sequence">1</field>
+            <field name="sequence">0</field>
             <field name="description">Chemical Tax (Electronics)</field>
             <field name="excise_type_id" ref="excise_type_electronics"/>
             <field name="tax_group_id" ref="tax_group_excise"/>
@@ -112,7 +122,7 @@
             <field name="amount_type">swedish_excise</field>
             <field name="amount">0.0</field>
             <field name="include_base_amount" eval="True"/>
-            <field name="sequence">1</field>
+            <field name="sequence">0</field>
             <field name="description">Chemical Tax (Major Appliances)</field>
             <field name="excise_type_id" ref="excise_type_major_appliances"/>
             <field name="tax_group_id" ref="tax_group_excise"/>

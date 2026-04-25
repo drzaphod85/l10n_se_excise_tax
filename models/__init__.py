@@ -1,5 +1,6 @@
 from . import excise_tax
 from . import account_tax
+from . import res_partner
 from . import sale_order_line
 from . import account_move_line
 from . import res_company

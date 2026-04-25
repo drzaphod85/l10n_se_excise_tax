@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        ===================================================================
+        Swedish excise & VAT-column QWeb inherits
+        ===================================================================
+        Two display behaviours are layered on top of the stock Odoo 19
+        sale- and invoice-report templates:
+
+        1. **Excise folded into Amount column** — when the company flag
+           ``excise_show_as_separate_row`` is OFF, the per-line Amount
+           column shows ``price_subtotal + (qty × per-unit excise)``
+           via the ``l10n_se_display_price_subtotal`` computed field.
+           The Unit Price column is left at the net value. The totals
+           block also drops the "Swedish Excise Tax" row and bumps
+           Untaxed Amount (handled in
+           ``account.tax._l10n_se_excise_postprocess_tax_totals``).
+
+        2. **VAT column hidden from PDFs and portal** — when the
+           company flag ``hide_vat_column_on_documents`` is ON, the
+           Moms / Taxes column header and body cells are suppressed
+           on sale PDFs, invoice PDFs and the customer portal views.
+           The VAT row in the totals block is unaffected (Swedish
+           invoice rules keep the aggregate VAT disclosure there).
+
+        Both behaviours default to OFF, so these inherits are safe
+        no-ops on a fresh install.
+
+        Each ``t-if`` override preserves the stock template's
+        existing ``display_taxes`` guard by wrapping the new
+        condition around it — we only *add* a reason to hide the
+        column, never force it visible.
+    -->
+
+    <!-- ==============================================================
+         Sale order / quotation PDF report
+         ==============================================================
+         The PDF totals block uses ``doc`` (not ``o``) as the order
+         variable inside the ``t-call="sale.document_tax_totals"``
+         block. We replace its ``tax_totals`` binding with the
+         folded view so the customer-facing PDF respects the
+         ``excise_show_as_separate_row`` flag.
+    -->
+    <template id="report_saleorder_document_l10n_se_excise"
+              inherit_id="sale.report_saleorder_document"
+              name="Sale Order Report — Excise Display &amp; VAT Column Hide">
+
+        <!-- Unit Price column: swap price_unit → display unit price. -->
+        <xpath expr="//td[@name='td_product_priceunit']//span[@t-field='line.price_unit']"
+               position="attributes">
+            <attribute name="t-field">line.l10n_se_display_price_unit</attribute>
+        </xpath>
+
+        <!-- Amount column: swap price_subtotal → display subtotal. -->
+        <xpath expr="//td[@name='td_product_subtotal']//span[@t-field='line.price_subtotal']"
+               position="attributes">
+            <attribute name="t-field">line.l10n_se_display_price_subtotal</attribute>
+        </xpath>
+
+        <!--
+            ``sale.report_saleorder_document`` uses ``doc`` (not ``o``)
+            as the order record variable inside its line loop and
+            totals block — see the t-set in the parent layout. The
+            Taxes-column hide therefore reads ``doc.company_id`` to
+            stay consistent with the surrounding template; using
+            ``o`` here raises ``KeyError: 'o'`` at render time.
+        -->
+        <xpath expr="//th[@name='th_taxes']"
+               position="attributes">
+            <attribute name="t-if">display_taxes and not doc.company_id.hide_vat_column_on_documents</attribute>
+        </xpath>
+
+        <xpath expr="//td[@name='td_product_taxes']"
+               position="attributes">
+            <attribute name="t-if">display_taxes and not doc.company_id.hide_vat_column_on_documents</attribute>
+        </xpath>
+
+        <!-- Totals block: render the folded view instead of the raw
+             tax_totals so PDF respects the company's fold flag while
+             the on-screen form-view widget keeps the full breakdown. -->
+        <xpath expr="//t[@t-call='sale.document_tax_totals']/t[@t-set='tax_totals']"
+               position="attributes">
+            <attribute name="t-value">doc._l10n_se_get_tax_totals_for_render()</attribute>
+        </xpath>
+    </template>
+
+    <!-- ==============================================================
+         Sale order / quotation customer portal
+         ==============================================================
+         The portal template uses ``sale_order`` (not ``o``) as the
+         main record variable and ``id="taxes_header"`` rather than
+         ``name="..."`` on the header cell.
+    -->
+    <template id="sale_order_portal_content_l10n_se_excise"
+              inherit_id="sale.sale_order_portal_content"
+              name="Sale Order Portal — Excise Display &amp; VAT Column Hide">
+
+        <!--
+            Unit Price column on the portal uses a ``div`` with
+            ``t-field="line.price_unit"`` (and a ``t-if`` guard on
+            the discount); we only swap that single binding so the
+            discount-aware sibling spans are untouched.
+        -->
+        <xpath expr="//td[@name='td_product_priceunit']//div[@t-field='line.price_unit']"
+               position="attributes">
+            <attribute name="t-field">line.l10n_se_display_price_unit</attribute>
+        </xpath>
+
+        <xpath expr="//td[@name='td_product_subtotal']//span[@t-field='line.price_subtotal']"
+               position="attributes">
+            <attribute name="t-field">line.l10n_se_display_price_subtotal</attribute>
+        </xpath>
+
+        <xpath expr="//th[@id='taxes_header']"
+               position="attributes">
+            <attribute name="t-if">display_taxes and not sale_order.company_id.hide_vat_column_on_documents</attribute>
+        </xpath>
+
+        <xpath expr="//td[@name='td_product_taxes']"
+               position="attributes">
+            <attribute name="t-if">display_taxes and not sale_order.company_id.hide_vat_column_on_documents</attribute>
+        </xpath>
+    </template>
+
+    <!-- ==============================================================
+         Invoice / bill PDF report
+         ==============================================================
+         The invoice customer portal re-renders this same template
+         inside an iframe, so this single inherit covers both the PDF
+         output and the portal invoice view.
+    -->
+    <template id="report_invoice_document_l10n_se_excise"
+              inherit_id="account.report_invoice_document"
+              name="Invoice Report — Excise Display &amp; VAT Column Hide">
+
+        <xpath expr="//td[@name='td_price_unit']//span[@t-field='line.price_unit']"
+               position="attributes">
+            <attribute name="t-field">line.l10n_se_display_price_unit</attribute>
+        </xpath>
+
+        <xpath expr="//td[@name='td_subtotal']//span[@t-field='line.price_subtotal']"
+               position="attributes">
+            <attribute name="t-field">line.l10n_se_display_price_subtotal</attribute>
+        </xpath>
+
+        <xpath expr="//th[@name='th_taxes']"
+               position="attributes">
+            <attribute name="t-if">display_taxes and not o.company_id.hide_vat_column_on_documents</attribute>
+        </xpath>
+
+        <xpath expr="//td[@name='td_taxes']"
+               position="attributes">
+            <attribute name="t-if">display_taxes and not o.company_id.hide_vat_column_on_documents</attribute>
+        </xpath>
+
+        <!-- Totals block: render the folded view instead of the raw
+             tax_totals (see comment on the sale-PDF inherit). -->
+        <xpath expr="//t[@t-call='account.document_tax_totals']/t[@t-set='tax_totals']"
+               position="attributes">
+            <attribute name="t-value">o._l10n_se_get_tax_totals_for_render()</attribute>
+        </xpath>
+    </template>
+
+    <!-- ==============================================================
+         Sale order portal — totals sub-template
+         ==============================================================
+         The portal's totals block lives in its own little template
+         ``sale.sale_order_portal_content_totals_table`` which is
+         t-called from the main portal page. We override the
+         ``tax_totals`` binding there. (The main portal template
+         inherit above only handles the line-row swaps and the
+         Taxes-column hide — it doesn't touch the totals.)
+    -->
+    <template id="sale_order_portal_content_totals_table_l10n_se_excise"
+              inherit_id="sale.sale_order_portal_content_totals_table"
+              name="Sale Order Portal Totals — Excise Fold for Render">
+
+        <xpath expr="//t[@t-set='tax_totals']"
+               position="attributes">
+            <attribute name="t-value">sale_order._l10n_se_get_tax_totals_for_render()</attribute>
+        </xpath>
+    </template>
+
+</odoo>
