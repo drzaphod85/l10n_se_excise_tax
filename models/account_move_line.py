@@ -5,32 +5,69 @@ from odoo import models, fields, api, _
 class AccountMoveLine(models.Model):
     _inherit = 'account.move.line'
 
+    # ------------------------------------------------------------------
+    # Snapshot fields – stored compute, see the matching block on
+    # ``sale.order.line`` for the rationale.
+    # ------------------------------------------------------------------
     excise_weight = fields.Float(
         string="Skattevikt (Snapshot)",
         digits='Stock Weight',
+        compute='_compute_excise_snapshot',
+        store=True,
+        readonly=False,
         help="Vikt (kg) som används för beräkning vid faktureringstillfället. "
              "Konsulteras endast när skattetypens enhet är 'kg'.",
     )
     excise_volume = fields.Float(
         string="Skattevolym (Snapshot)",
         digits=(12, 4),
+        compute='_compute_excise_snapshot',
+        store=True,
+        readonly=False,
         help="Volym (L) som används för beräkning vid faktureringstillfället. "
              "Konsulteras endast när skattetypens enhet är 'liter'.",
     )
     excise_pieces = fields.Float(
         string="Skatteantal styck (Snapshot)",
         digits=(12, 2),
-        default=1.0,
+        compute='_compute_excise_snapshot',
+        store=True,
+        readonly=False,
         help="Antal styck per produktenhet (t.ex. 20 för en cigarettask "
              "med 20 cigaretter). Konsulteras endast när skattetypens "
              "enhet är 'pcs'.",
     )
     excise_reduction_ratio = fields.Float(
         string="Avdragsfaktor",
-        default=1.0,
+        compute='_compute_excise_snapshot',
+        store=True,
+        readonly=False,
         help="Reduktionsfaktor (1.0, 0.5 eller 0.1) vid faktureringstillfället. "
              "Specifik för Kemikalieskatt; ignoreras av andra punktskattetyper.",
     )
+
+    @api.depends('product_id')
+    def _compute_excise_snapshot(self):
+        """Populate the snapshot fields from the product whenever
+        ``product_id`` is set / changed. See sale.order.line for the
+        rationale (compute fires on programmatic create() too,
+        unlike @api.onchange).
+        """
+        mapping = {'0': 1.0, '50': 0.5, '90': 0.1}
+        for line in self:
+            product = line.product_id
+            if product and product.is_excise_taxable:
+                line.excise_weight = product.net_weight_excise or 0.0
+                line.excise_volume = product.excise_volume_litres or 0.0
+                line.excise_pieces = product.excise_pieces_per_qty or 1.0
+                line.excise_reduction_ratio = mapping.get(
+                    product.excise_reduction, 1.0,
+                )
+            else:
+                line.excise_weight = 0.0
+                line.excise_volume = 0.0
+                line.excise_pieces = 1.0
+                line.excise_reduction_ratio = 1.0
 
     # ------------------------------------------------------------------
     # Display helpers for the "excise folded into the line price" mode.
@@ -96,24 +133,6 @@ class AccountMoveLine(models.Model):
             else:
                 line.l10n_se_display_price_unit = line.price_unit
                 line.l10n_se_display_price_subtotal = line.price_subtotal
-
-    @api.onchange('product_id')
-    def _onchange_product_id_excise(self):
-        mapping = {'0': 1.0, '50': 0.5, '90': 0.1}
-        for line in self:
-            product = line.product_id
-            if product and product.is_excise_taxable:
-                line.excise_weight = product.net_weight_excise
-                line.excise_volume = product.excise_volume_litres
-                line.excise_pieces = product.excise_pieces_per_qty or 1.0
-                line.excise_reduction_ratio = mapping.get(
-                    product.excise_reduction, 1.0,
-                )
-            else:
-                line.excise_weight = 0.0
-                line.excise_volume = 0.0
-                line.excise_pieces = 1.0
-                line.excise_reduction_ratio = 1.0
 
     # ------------------------------------------------------------------
     # Tax-engine integration

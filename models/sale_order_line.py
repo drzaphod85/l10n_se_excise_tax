@@ -9,38 +9,92 @@ class SaleOrderLine(models.Model):
     # Snapshot fields – lock the excise basis at the moment the product
     # is picked so later changes on the product template don't retro-
     # actively change the quotation / order totals.
+    #
+    # These are stored compute fields with ``readonly=False``: the
+    # compute fires whenever ``product_id`` changes (form view
+    # onchange, programmatic ``create()``, eCommerce cart update,
+    # API import — all of them), but the user / accountant can
+    # still override per-line via the Excise Weight / Volume /
+    # Pieces / Reduction Ratio columns surfaced on the order-line
+    # list. The previous design relied on @api.onchange alone,
+    # which only fires from the form view — eCommerce cart creation
+    # therefore left the snapshot at zero, the engine computed
+    # zero excise, and VAT silently fell back to ``25 % × subtotal``.
     # ------------------------------------------------------------------
     excise_weight = fields.Float(
         string="Excise Weight (kg)",
         digits='Stock Weight',
+        compute='_compute_excise_snapshot',
+        store=True,
+        readonly=False,
         help="Weight (kg) used to calculate the Swedish excise tax for this "
-             "line. Snapshotted from the product when selected. Only "
-             "consulted when the linked Excise Type's Unit Basis is 'kg'.",
+             "line. Auto-populated from the product when selected; can be "
+             "overridden per line. Only consulted when the linked Excise "
+             "Type's Unit Basis is 'kg'.",
     )
     excise_volume = fields.Float(
         string="Excise Volume (L)",
         digits=(12, 4),
+        compute='_compute_excise_snapshot',
+        store=True,
+        readonly=False,
         help="Volume (L) used to calculate the Swedish excise tax for "
-             "this line. Snapshotted from the product when selected. "
-             "Only consulted when the linked Excise Type's Unit Basis is "
-             "'liter'.",
+             "this line. Auto-populated from the product when selected; "
+             "can be overridden per line. Only consulted when the linked "
+             "Excise Type's Unit Basis is 'liter'.",
     )
     excise_pieces = fields.Float(
         string="Excise Pieces (per unit)",
         digits=(12, 2),
-        default=1.0,
+        compute='_compute_excise_snapshot',
+        store=True,
+        readonly=False,
         help="Number of countable pieces per product unit (e.g. 20 for "
-             "a 20-cigarette pack). Snapshotted from the product when "
-             "selected. Only consulted when the linked Excise Type's "
-             "Unit Basis is 'pcs'.",
+             "a 20-cigarette pack). Auto-populated from the product when "
+             "selected; can be overridden per line. Only consulted when "
+             "the linked Excise Type's Unit Basis is 'pcs'.",
     )
     excise_reduction_ratio = fields.Float(
         string="Excise Reduction Ratio",
-        default=1.0,
+        compute='_compute_excise_snapshot',
+        store=True,
+        readonly=False,
         help="Reduction factor applied to the weight-based excise amount. "
              "1.0 = full tax, 0.5 = 50% reduction, 0.1 = 90% reduction. "
-             "Specific to Kemikalieskatt; non-kg excise types ignore it.",
+             "Auto-populated from the product. Specific to Kemikalieskatt; "
+             "non-kg excise types ignore it.",
     )
+
+    @api.depends('product_id')
+    def _compute_excise_snapshot(self):
+        """Populate the per-line excise snapshot from the product.
+
+        Replaces the older ``@api.onchange('product_id')`` populator
+        — see the class-level comment block above for why. Fires on
+        every code path that sets ``product_id``, including
+        programmatic ``create()`` calls from eCommerce / cart /
+        API / import.
+
+        The fields are ``store=True, readonly=False`` so accountants
+        can still override per line on the order. Once the user
+        manually edits a snapshot the value sticks, because the
+        compute only re-runs when ``product_id`` itself changes.
+        """
+        reduction_map = {'0': 1.0, '50': 0.5, '90': 0.1}
+        for line in self:
+            product = line.product_id
+            if product and product.is_excise_taxable:
+                line.excise_weight = product.net_weight_excise or 0.0
+                line.excise_volume = product.excise_volume_litres or 0.0
+                line.excise_pieces = product.excise_pieces_per_qty or 1.0
+                line.excise_reduction_ratio = reduction_map.get(
+                    product.excise_reduction, 1.0,
+                )
+            else:
+                line.excise_weight = 0.0
+                line.excise_volume = 0.0
+                line.excise_pieces = 1.0
+                line.excise_reduction_ratio = 1.0
 
     # ------------------------------------------------------------------
     # Display helpers for the "excise folded into the line price" mode.
@@ -132,24 +186,6 @@ class SaleOrderLine(models.Model):
             else:
                 line.l10n_se_display_price_unit = line.price_unit
                 line.l10n_se_display_price_subtotal = line.price_subtotal
-
-    @api.onchange('product_id')
-    def _onchange_product_id_excise(self):
-        reduction_map = {'0': 1.0, '50': 0.5, '90': 0.1}
-        for line in self:
-            product = line.product_id
-            if product and product.is_excise_taxable:
-                line.excise_weight = product.net_weight_excise
-                line.excise_volume = product.excise_volume_litres
-                line.excise_pieces = product.excise_pieces_per_qty or 1.0
-                line.excise_reduction_ratio = reduction_map.get(
-                    product.excise_reduction, 1.0,
-                )
-            else:
-                line.excise_weight = 0.0
-                line.excise_volume = 0.0
-                line.excise_pieces = 1.0
-                line.excise_reduction_ratio = 1.0
 
     # ------------------------------------------------------------------
     # Tax-engine integration
