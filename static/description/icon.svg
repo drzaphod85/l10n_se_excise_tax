@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!--
+    l10n_se_excise_tax — module icon
+    - Swedish blue (#005293) rounded-square background with a subtle
+      vertical gradient for depth.
+    - Subtle Nordic cross (Swedish flag motif) at low opacity so the
+      country signal is there without being literal.
+    - Bold white "kr" centred — the Swedish currency mark, recognised
+      everywhere as a tax/money cue.
+    - Yellow underline (Swedish flag yellow #FECC00) under the "kr"
+      to give it an excise-specific accent and balance the colour.
+  -->
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0066b3"/>
+      <stop offset="100%" stop-color="#003d7a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded blue background -->
+  <rect width="256" height="256" rx="40" ry="40" fill="url(#bg)"/>
+
+  <!-- Subtle Swedish Nordic cross (yellow, low opacity) -->
+  <g opacity="0.18" fill="#FECC00">
+    <rect x="76" y="0" width="24" height="256"/>
+    <rect x="0" y="116" width="256" height="24"/>
+  </g>
+
+  <!-- Centered "kr" mark -->
+  <text x="128" y="172"
+        font-family="Helvetica, Arial, sans-serif"
+        font-size="120" font-weight="900"
+        fill="#ffffff" text-anchor="middle">kr</text>
+
+  <!-- Yellow accent bar under the kr -->
+  <rect x="68" y="194" width="120" height="8" rx="4" fill="#FECC00"/>
+</svg>
