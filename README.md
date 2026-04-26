@@ -18,7 +18,7 @@ gravel, energy, or any other weight- / volume- / piece-based
 excise regime is largely a data-file exercise rather than a code
 change.
 
-* **Version:** 19.0.3.0.0
+* **Version:** 19.0.3.3.2
 * **License:** LGPL-3
 * **Author:** Lasse Larsson
 * **Category:** Accounting / Localizations
@@ -79,6 +79,19 @@ This module:
   VAT is computed on `(line subtotal + excise)`.
 
 ### Customer-facing presentation
+
+The module covers four customer-facing surfaces consistently —
+the back-office sale-order / invoice form, the QWeb PDF report,
+the customer portal, and the **eCommerce shop** (`/shop/product/<id>`,
+`/shop/cart`, `/shop/checkout`). All four respect the company's
+"Show Excise Tax as Separate Row" toggle and produce the same
+math; they just present it differently:
+
+- Form view always shows the full breakdown (seller's working surface).
+- PDF / portal / eCommerce honour the company toggle: when OFF,
+  the per-line Unit Price + Amount and the cart Subtotal display
+  the excise-inclusive value; when ON, the excise itemises as a
+  separate row and the line prices stay at the bare net value.
 
 * **"Show Excise Tax as Separate Row" company toggle.** When ON
   (default), the customer-facing PDF, customer portal and form view

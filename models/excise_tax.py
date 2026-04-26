@@ -139,6 +139,85 @@ class ProductTemplate(models.Model):
              "Reduction'.",
     )
 
+    # ------------------------------------------------------------------
+    # Per-unit excise amount, computed from the linked excise type
+    # and the per-product driver fields. Used by the eCommerce
+    # product-page price override (so the displayed price can include
+    # the excise when the company is in "fold" mode), by the cart
+    # line override, and by anywhere else that needs a no-line-yet
+    # excise figure (e.g. catalog filters in the future).
+    # ------------------------------------------------------------------
+    excise_amount_per_unit = fields.Monetary(
+        compute='_compute_excise_amount_per_unit',
+        string="Excise Tax per Unit",
+        currency_field='currency_id',
+        help="Per-unit Swedish excise amount (kr) for this product, "
+             "computed from the linked Excise Type's rate / cap / "
+             "unit_basis and the matching driver field on the "
+             "product (weight, volume or pieces). Reflects the "
+             "Reduction Level if the linked type uses Kemikalieskatt-"
+             "style reductions. 0 when the product is not excise-"
+             "taxable or has no swedish_excise tax in its Customer "
+             "Taxes.",
+    )
+
+    @api.depends(
+        'is_excise_taxable',
+        'taxes_id',
+        'taxes_id.amount_type',
+        'taxes_id.excise_type_id',
+        'taxes_id.excise_type_id.unit_basis',
+        'taxes_id.excise_type_id.tax_rate',
+        'taxes_id.excise_type_id.max_limit',
+        'taxes_id.excise_type_id.has_reduction_levels',
+        'net_weight_excise',
+        'excise_volume_litres',
+        'excise_pieces_per_qty',
+        'excise_reduction',
+    )
+    def _compute_excise_amount_per_unit(self):
+        """Compute the per-unit excise amount for the product, from
+        the linked swedish_excise tax in its Customer Taxes.
+
+        Mirrors the engine hook's dispatch on ``unit_basis`` so the
+        product-level value matches what the engine will compute for
+        a sale-order or invoice line carrying this product.
+        """
+        reduction_map = {'0': 1.0, '50': 0.5, '90': 0.1}
+        for product in self:
+            amount = 0.0
+            if product.is_excise_taxable:
+                excise_tax = product.taxes_id.filtered(
+                    lambda t: t.amount_type == 'swedish_excise'
+                )[:1]
+                if excise_tax:
+                    amount = excise_tax._get_excise_unit_amount(
+                        weight=product.net_weight_excise or 0.0,
+                        volume=product.excise_volume_litres or 0.0,
+                        pieces=product.excise_pieces_per_qty or 1.0,
+                        reduction_ratio=reduction_map.get(
+                            product.excise_reduction, 1.0,
+                        ),
+                    )
+            product.excise_amount_per_unit = amount
+
+    def _get_excise_inclusive_price(self, base_price):
+        """Return ``base_price + excise_amount_per_unit`` when the
+        company is in fold mode (``excise_show_as_separate_row`` is
+        False), else return ``base_price`` unchanged.
+
+        Used by the eCommerce product-page price template and the
+        cart-line price override to keep the customer-facing display
+        consistent with the totals breakdown — when fold is on, the
+        cart's Subtotal shows the bumped value, so the per-line
+        prices (and the product-detail price) should match.
+        """
+        self.ensure_one()
+        company = self.env.company
+        if not self.is_excise_taxable or company.excise_show_as_separate_row:
+            return base_price
+        return base_price + (self.excise_amount_per_unit or 0.0)
+
     # Mirror of the linked Excise Type's ``unit_basis``. Used by the
     # product form to switch which driver field is visible (kg vs
     # liter). Exposed as a related field so the view can reference

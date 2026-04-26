@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Swedish Excise Tax (Chemical Tax)',
-    'version': '19.0.3.1.0',
+    'version': '19.0.3.3.2',
     'category': 'Accounting/Localizations',
     'summary': 'Manage chemical taxes and other excise duties applied before VAT.',
     'description': """
@@ -17,7 +17,7 @@ Key features:
 * Support for taxes being included in the VAT base.
     """,
     'author': 'Lasse Larsson',
-    'depends': ['account', 'product', 'sale'],
+    'depends': ['account', 'product', 'sale', 'website_sale'],
     'data': [
         'security/ir.model.access.csv',
         'data/excise_tax_data.xml',
@@ -28,6 +28,7 @@ Key features:
         'views/res_config_settings_views.xml',
         'views/res_partner_views.xml',
         'views/report_templates.xml',
+        'views/website_sale_templates.xml',
     ],
     'installable': True,
     'application': False,

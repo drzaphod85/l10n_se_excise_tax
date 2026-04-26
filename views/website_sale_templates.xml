@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        ===================================================================
+        eCommerce cart / checkout — Swedish excise breakdown
+        ===================================================================
+
+        Odoo 19's stock ``website_sale.total`` template renders the
+        cart-summary box as three plain rows:
+
+            Subtotal :  amount_untaxed
+            Taxes    :  amount_tax       ← single sum of ALL taxes
+            Total    :  amount_total
+
+        On a Swedish order with both excise (CHEM E / NIK / TOB) and
+        VAT, ``amount_tax`` is the sum of the two — so the customer
+        sees a single "Moms" row of (excise + VAT) and reads it as
+        an inflated VAT (e.g. 480.40 / 1 000 = 48 %), which is
+        confusing and arguably non-compliant labelling.
+
+        This inherit replaces the Subtotal + Taxes rows with content
+        sourced from ``website_sale_order._l10n_se_get_tax_totals_for_render()``
+        — the same render helper the PDF and the customer portal
+        already use. It produces:
+
+            Subtotal           : tax_totals.base_amount_currency
+                                  (= amount_untaxed when excise is
+                                   shown as a separate row, OR
+                                   amount_untaxed + folded excise
+                                   when the company toggle is off)
+
+            <each tax group>   : tax_groups[N].tax_amount_currency
+                                  e.g. "Swedish Excise Tax  184.32"
+                                       "Moms 25 %             296.08"
+
+            Total              : amount_total (untouched)
+
+        The Total row is left as-is — ``amount_total`` is correct
+        regardless of how the breakdown is presented.
+    -->
+
+    <template id="website_sale_total_l10n_se_excise"
+              inherit_id="website_sale.total"
+              name="Cart Totals — Swedish Excise Breakdown">
+
+        <xpath expr="//tr[@name='o_order_total_untaxed']"
+               position="replace">
+            <!--
+                Compute the rendered tax_totals once for the whole
+                replacement block. The helper gracefully handles
+                non-excise orders too (returns the standard tax_totals
+                JSON unchanged), so this override is a no-op on
+                orders that don't carry a swedish_excise tax.
+            -->
+            <t t-set="se_tt"
+               t-value="website_sale_order._l10n_se_get_tax_totals_for_render() if website_sale_order else False"/>
+
+            <tr name="o_order_total_untaxed">
+                <td class="border-0 pb-2 ps-0 pt-0 text-start text-muted"
+                    colspan="2">
+                    Subtotal
+                </td>
+                <td class="text-end border-0 pb-2 pe-0 pt-0">
+                    <span class="monetary_field"
+                          style="white-space: nowrap;"
+                          t-out="(se_tt.get('base_amount_currency') if se_tt else 0.0) or website_sale_order.amount_untaxed"
+                          t-options="{'widget': 'monetary', 'display_currency': website_sale_order.currency_id}"/>
+                </td>
+            </tr>
+
+            <!--
+                Per-tax-group rows. Iterate every tax group across
+                every subtotal level so cascading taxes (excise +
+                VAT in two batches) all render. Names fall back to
+                ``group_name`` then ``name`` for compatibility
+                across Odoo 17/18/19 minor differences.
+            -->
+            <t t-if="se_tt"
+               t-foreach="se_tt.get('subtotals') or []" t-as="se_sub">
+                <t t-foreach="se_sub.get('tax_groups') or []" t-as="se_grp">
+                    <tr t-att-name="'o_order_total_tax_group_' + str(se_grp.get('id', ''))">
+                        <td colspan="2" class="text-muted border-0 p-0 pe-3 pb-2">
+                            <t t-out="se_grp.get('group_name') or se_grp.get('name') or ''"/>
+                        </td>
+                        <td class="text-end border-0 p-0 ps-3 pb-2">
+                            <span class="monetary_field"
+                                  style="white-space: nowrap;"
+                                  t-out="se_grp.get('tax_amount_currency') or se_grp.get('tax_amount') or 0.0"
+                                  t-options="{'widget': 'monetary', 'display_currency': website_sale_order.currency_id}"/>
+                        </td>
+                    </tr>
+                </t>
+            </t>
+        </xpath>
+
+        <!--
+            Hide the original aggregate "Taxes" row — replaced by
+            the per-group rows injected above. We don't drop it
+            entirely so a downstream override can still locate it
+            by name; we just guard it with ``t-if="False"`` so it
+            never renders.
+        -->
+        <xpath expr="//tr[@name='o_order_total_taxes']"
+               position="attributes">
+            <attribute name="t-if">False</attribute>
+        </xpath>
+
+    </template>
+
+    <!--
+        ===================================================================
+        Product detail page price — fold-mode override
+        ===================================================================
+        ``website_sale.product_price`` renders the bold price near the
+        product name on /shop/product/<id> using
+        ``t-out="combination_info['price']"``.  When the company is in
+        fold mode (``excise_show_as_separate_row=False``), we want the
+        displayed price to include the excise component so the
+        customer's mental price matches the cart's bumped Subtotal.
+
+        The helper ``product._get_excise_inclusive_price()`` returns
+        the same ``combination_info['price']`` unchanged when fold is
+        off OR when the product isn't excise-taxable, so this inherit
+        is a no-op in those cases.
+    -->
+    <template id="product_price_l10n_se_excise"
+              inherit_id="website_sale.product_price"
+              name="Product Price — Swedish Excise Inclusive">
+
+        <!--
+            ``hasclass('oe_price')`` instead of ``@class='oe_price'``:
+            the latter is strict equality (``class == "oe_price"``)
+            and silently misses elements whose class attribute carries
+            multiple tokens (e.g. ``class="oe_price h2 mb-0"``), which
+            Odoo's product-page template variants commonly do.
+            ``hasclass()`` is Odoo's xpath helper that matches any
+            class token in the attribute — equivalent to a CSS
+            selector. Odoo also emits a runtime "Error-prone use of
+            @class" warning at module load when ``@class=`` is used.
+        -->
+        <xpath expr="//span[hasclass('oe_price')]"
+               position="replace">
+            <span class="oe_price"
+                  style="white-space: nowrap;"
+                  t-out="product._get_excise_inclusive_price(combination_info['price'])"
+                  t-options="{'widget': 'monetary', 'display_currency': website.currency_id}"/>
+        </xpath>
+    </template>
+
+    <!--
+        ===================================================================
+        Cart line item price — fold-mode override
+        ===================================================================
+        ``website_sale.cart_lines_price`` computes the line's display
+        total via ``line._get_cart_display_price()`` and t-sets it as
+        ``product_price``. In fold mode we replace that with the
+        line's own ``l10n_se_display_price_subtotal`` (which already
+        equals price_subtotal + qty × per-unit excise via the compute
+        on sale.order.line), so the cart line price matches the
+        Subtotal shown in the totals box and the customer doesn't see
+        an inconsistency between line price and Subtotal.
+
+        When fold is off, ``l10n_se_display_price_subtotal`` ==
+        ``price_subtotal``, so the override is a no-op there too —
+        the line shows the bare net price and the excise renders as
+        a separate row in the totals breakdown.
+    -->
+    <template id="cart_lines_price_l10n_se_excise"
+              inherit_id="website_sale.cart_lines_price"
+              name="Cart Line Price — Swedish Excise Inclusive">
+
+        <xpath expr="//t[@t-set='product_price']"
+               position="attributes">
+            <attribute name="t-value">line.l10n_se_display_price_subtotal if (line.order_id and not line.order_id.company_id.excise_show_as_separate_row) else line._get_cart_display_price()</attribute>
+        </xpath>
+    </template>
+
+</odoo>
