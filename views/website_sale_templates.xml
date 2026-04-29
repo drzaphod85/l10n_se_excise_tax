@@ -176,4 +176,31 @@
         </xpath>
     </template>
 
+    <!--
+        ===================================================================
+        Checkout-sidebar line price (address & payment steps)
+        ===================================================================
+        ``website_sale.cart_summary_content`` is the compact line list
+        rendered on the right-hand sidebar of the address-edit and
+        payment steps of /shop/checkout (not /shop/cart, which uses
+        cart_lines_price). It calls cart_product_price directly with
+        an inline ``t-set product_price``, bypassing the
+        cart_lines_price template — so our cart-line override above
+        does NOT cover this surface and the customer would see the
+        bare net line price (1 000) here even with fold mode on.
+
+        Same shape as the cart_lines_price override: swap the t-set
+        value to use the line's excise-inclusive display field when
+        the company is in fold mode.
+    -->
+    <template id="cart_summary_content_l10n_se_excise"
+              inherit_id="website_sale.cart_summary_content"
+              name="Checkout Sidebar Line Price — Swedish Excise Inclusive">
+
+        <xpath expr="//td[@name='website_sale_cart_summary_line_price']//t[@t-set='product_price']"
+               position="attributes">
+            <attribute name="t-value">line.l10n_se_display_price_subtotal if (line.order_id and not line.order_id.company_id.excise_show_as_separate_row) else line._get_cart_display_price()</attribute>
+        </xpath>
+    </template>
+
 </odoo>

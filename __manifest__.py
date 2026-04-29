@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Swedish Excise Tax (Chemical Tax)',
-    'version': '19.0.3.3.2',
+    'version': '19.0.3.3.3',
     'category': 'Accounting/Localizations',
     'summary': 'Manage chemical taxes and other excise duties applied before VAT.',
     'description': """
