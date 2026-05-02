@@ -70,9 +70,20 @@ This module:
   the values they had at validation time, so later edits on the
   product template don't retroactively change historical documents.
 * **Per-product reduction (Kemikalieskatt only)** — products with
-  certain flame-retardant chemistries qualify for a 50% or 90%
-  reduction. Enabled by ticking `has_reduction_levels` on the
-  excise type; other excise regimes ignore the reduction field.
+  certain flame-retardant chemistries qualify for a 50 % or 95 %
+  reduction (per Lag (2016:1067): 50 % when the product contains no
+  bromine or chlorine compounds; 95 % when it also contains no
+  phosphorus compounds). Enabled by ticking `has_reduction_levels`
+  on the excise type; other excise regimes ignore the reduction
+  field.
+* **Default rules per product category.** The
+  `excise.tax.default` model lets accountants set "products in
+  category X default to this excise tax with this reduction" or
+  fall back to an "all products" rule. Products inherit the
+  configuration when first flagged Excise Taxable, and the
+  *Apply Excise Defaults* server action retro-applies the rules
+  to a selection of existing products. See
+  *Configuration → Default Excise Tax Rules* below.
 * **VAT compounding done right.** Excise ships at `sequence=0` so it
   sorts strictly before standard Swedish 25 % VAT (`sequence=1`),
   and Odoo's cascade forwards the excise amount into the VAT base.
@@ -160,7 +171,7 @@ didn't apply.
        ├── unit_basis ∈ {kg, liter, …}
        ├── tax_rate (per unit_basis unit)
        ├── max_limit (per-unit cap; 0 = no cap)
-       └── has_reduction_levels (Kemikalieskatt-style 50%/90%)
+       └── has_reduction_levels (Kemikalieskatt-style 50%/95%)
             ▲
             │ Many2one
             │
@@ -266,6 +277,37 @@ Kemikalieskatt-style reductions. Confirmed orders and posted
 invoices are immune to later rate changes because they carry a
 snapshot.
 
+### Default Excise Tax Rules
+
+*Accounting → Configuration → Default Excise Tax Rules*
+
+Add rules that say *"products in this category default to this
+excise tax with these settings"*. Each rule sets:
+
+* **Product Category** — leave empty to make the rule apply to
+  *all* products as a fallback. A category-specific rule always
+  wins over the fallback.
+* **Sequence** — multiple rules under the same scope are tried
+  in ascending order (lowest first).
+* **Default Excise Tax** — the `account.tax` (with
+  `amount_type='swedish_excise'`) the rule pushes onto the
+  product's Customer Taxes. The product's *Excise Tax Type* is
+  derived from this tax.
+* **Reduction Level** — only meaningful for types with
+  `has_reduction_levels=True` (Kemikalieskatt). Hidden otherwise.
+
+Rules are applied automatically when:
+
+* a user toggles **Excise Taxable** on a product that has no
+  excise type yet, or
+* the product's **Internal Category** is changed and no excise
+  is configured.
+
+To retro-apply rules to a selection of *existing* products, pick
+them in the product list and run *Action → Apply Excise Defaults*.
+The action only touches products that aren't already configured
+for excise, so it's safe to run repeatedly.
+
 ### Products
 
 On the product template (Sales tab), enable **Excise Taxable** and
@@ -278,7 +320,9 @@ fill in:
   — used for Nicotine e-liquid (regular and high-concentration).
 * **Reduction Level** *(only if the type has
   `has_reduction_levels=True` — i.e. Kemikalieskatt only)*: 0 %
-  (full), 50 %, or 90 %.
+  (full), 50 %, or 95 %. Per Lag (2016:1067): a product earns
+  50 % if it contains no bromine or chlorine compounds, and 95 %
+  if it also contains no phosphorus compounds.
 
 Finally, add the matching `account.tax` to the product's **Customer
 Taxes** alongside VAT:
@@ -328,9 +372,13 @@ tweak a specific document without changing the product master.
 
 * **Show Excise Tax as Separate Row.** Default ON.
 * **Hide VAT Column on Documents.** Default OFF.
+* **Excise Tax Types.** Shortcut button — opens
+  *Configuration → Excise Tax Types*.
+* **Default Excise Tax Rules.** Shortcut button — opens
+  *Configuration → Default Excise Tax Rules*.
 
 See the *Customer-facing presentation* section above for the effect
-of each.
+of each toggle.
 
 ### Customer-level exemption
 
@@ -359,7 +407,11 @@ l10n_se_excise_tax/
 │   ├── 19.0.1.2.0/pre-migration.py
 │   ├── 19.0.1.3.1/post-migration.py
 │   ├── 19.0.2.0.0/post-migration.py
-│   └── 19.0.3.0.0/post-migration.py
+│   ├── 19.0.3.0.0/post-migration.py
+│   ├── 19.0.3.4.0/post-migration.py   # apply_shipped_excise_data
+│   ├── 19.0.4.0.0/post-migration.py   # apply_shipped_excise_data
+│   └── 19.0.5.0.0/post-migration.py   # 90→95 reduction fix +
+│                                      #   apply_shipped_excise_data
 ├── models/
 │   ├── __init__.py
 │   ├── account_move.py         # _l10n_se_get_tax_totals_for_render
@@ -368,6 +420,9 @@ l10n_se_excise_tax/
 │   ├── account_tax.py          # swedish_excise amount type, _eval hook,
 │   │                           #   _l10n_se_excise_postprocess_tax_totals
 │   ├── excise_tax.py           # excise.tax.type + product.template fields
+│   │                           #   + _apply_excise_default /
+│   │                           #     action_apply_excise_defaults
+│   ├── excise_tax_default.py   # excise.tax.default — default-rule engine
 │   ├── res_company.py          # display toggles
 │   ├── res_config_settings.py  # related fields for the settings page
 │   ├── res_partner.py          # AWK flag + _l10n_se_is_excise_exempt
@@ -381,6 +436,9 @@ l10n_se_excise_tax/
 └── views/
     ├── account_move_views.xml      # invoice-line excise columns
     ├── account_tax_views.xml       # tax form: excise block + Posting Setup
+    ├── excise_tax_default_views.xml # Default Excise Tax Rules
+    │                               #   list/form/menu + "Apply Excise
+    │                               #   Defaults" server action
     ├── product_views.xml           # product template + excise.tax.type
     ├── report_templates.xml        # QWeb inherits for sale PDF / portal
     │                               #   and invoice PDF: per-line column
@@ -429,7 +487,7 @@ In `data/excise_tax_data.xml`:
     <field name="max_limit">0.0</field>           <!-- 0 = no cap -->
     <field name="has_reduction_levels" eval="False"/>
     <!-- Set to True only if your tax has Kemikalieskatt-style
-         50%/90% per-product reductions. -->
+         50%/95% per-product reductions. -->
 </record>
 ```
 
@@ -579,9 +637,12 @@ foreign-customer exemption out of the box.
 
 ## Known limits / roadmap
 
-* **Scope.** Two excise regimes (Kemikalieskatt, Nikotinskatt) ship
-  out of the box. Alcohol, tobacco, energy, gravel, pesticide, etc.
-  fit the same architecture and can be added per the recipe above.
+* **Scope.** Three excise regimes ship out of the box:
+  Kemikalieskatt (electronics + major appliances),
+  Nikotinskatt (e-liquid regular / high-concentration / other),
+  and Tobaksskatt (cigarettes, cigars, snus, smoking, chewing,
+  other). Alcohol, energy, gravel, pesticide, etc. fit the same
+  architecture and can be added per the recipe above.
 * **Compound taxes** (cigarettes: per-piece + ad-valorem) are best
   modelled as two separate `account.tax` records on the product —
   one `swedish_excise` for the per-piece leg, one standard

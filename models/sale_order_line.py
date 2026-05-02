@@ -60,7 +60,7 @@ class SaleOrderLine(models.Model):
         store=True,
         readonly=False,
         help="Reduction factor applied to the weight-based excise amount. "
-             "1.0 = full tax, 0.5 = 50% reduction, 0.1 = 90% reduction. "
+             "1.0 = full tax, 0.5 = 50% reduction, 0.05 = 95% reduction. "
              "Auto-populated from the product. Specific to Kemikalieskatt; "
              "non-kg excise types ignore it.",
     )
@@ -79,8 +79,12 @@ class SaleOrderLine(models.Model):
         can still override per line on the order. Once the user
         manually edits a snapshot the value sticks, because the
         compute only re-runs when ``product_id`` itself changes.
+
+        Reduction ratios mirror Skatteverket's Kemikalieskatt rules:
+        50 % reduction → ratio 0.5 (half the tax is paid),
+        95 % reduction → ratio 0.05 (5 % of the tax is paid).
         """
-        reduction_map = {'0': 1.0, '50': 0.5, '90': 0.1}
+        reduction_map = {'0': 1.0, '50': 0.5, '95': 0.05}
         for line in self:
             product = line.product_id
             if product and product.is_excise_taxable:

@@ -24,7 +24,8 @@ msgstr "Svensk punktskatt (Kemikalieskatt)"
 #. module: l10n_se_excise_tax
 #: model:ir.module.module,summary:base.module_l10n_se_excise_tax
 msgid "Manage chemical taxes and other excise duties applied before VAT."
-msgstr "Hantera kemikalieskatt och andra punktskatter som tillämpas före moms."
+msgstr ""
+"Hantera kemikalieskatt och andra punktskatter som tillämpas före moms."
 
 #. module: l10n_se_excise_tax
 #: model:ir.module.module,description:base.module_l10n_se_excise_tax
@@ -37,7 +38,7 @@ msgid ""
 "\n"
 "Key features:\n"
 "* Define excise tax types with custom rates and maximum limits.\n"
-"* Apply reductions (e.g., 50% or 90%) per product.\n"
+"* Apply reductions (e.g., 50% or 95%) per product.\n"
 "* Calculation logic integrated with Odoo's tax engine.\n"
 "* Support for taxes being included in the VAT base.\n"
 "    "
@@ -50,7 +51,7 @@ msgstr ""
 "\n"
 "Viktiga funktioner:\n"
 "* Definiera punktskattetyper med egna skattesatser och maxgränser.\n"
-"* Tillämpa reduceringar (t.ex. 50 % eller 90 %) per produkt.\n"
+"* Tillämpa reduceringar (t.ex. 50 % eller 95 %) per produkt.\n"
 "* Beräkningslogiken är integrerad med Odoos skattemotor.\n"
 "* Stöd för att skatten ingår i momsunderlaget.\n"
 "    "
@@ -58,9 +59,11 @@ msgstr ""
 # --------------------------------------------------------------------
 # Models
 # --------------------------------------------------------------------
-
 #. module: l10n_se_excise_tax
 #: model:ir.model,name:l10n_se_excise_tax.model_excise_tax_type
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_product_template__excise_tax_type_id
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_product_product__excise_tax_type_id
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.view_excise_tax_type_form
 msgid "Excise Tax Type"
 msgstr "Punktskattetyp"
 
@@ -87,7 +90,6 @@ msgstr "Verifikatrad"
 # --------------------------------------------------------------------
 # Selection values
 # --------------------------------------------------------------------
-
 #. module: l10n_se_excise_tax
 #: model:ir.model.fields.selection,name:l10n_se_excise_tax.selection__account_tax__amount_type__swedish_excise
 msgid "Swedish Excise Tax (Weight/Unit)"
@@ -104,14 +106,13 @@ msgid "50% Reduction"
 msgstr "50 % reducering"
 
 #. module: l10n_se_excise_tax
-#: model:ir.model.fields.selection,name:l10n_se_excise_tax.selection__product_template__excise_reduction__90
-msgid "90% Reduction"
-msgstr "90 % reducering"
+#: model:ir.model.fields.selection,name:l10n_se_excise_tax.selection__product_template__excise_reduction__95
+msgid "95% Reduction"
+msgstr "95 % reducering"
 
 # --------------------------------------------------------------------
 # excise.tax.type fields
 # --------------------------------------------------------------------
-
 #. module: l10n_se_excise_tax
 #: model:ir.model.fields,field_description:l10n_se_excise_tax.field_excise_tax_type__name
 msgid "Name"
@@ -129,6 +130,8 @@ msgstr "Maxgräns per enhet"
 
 #. module: l10n_se_excise_tax
 #: model:ir.model.fields,field_description:l10n_se_excise_tax.field_excise_tax_type__unit_basis
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_account_tax__excise_unit_basis_display
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_excise_tax_default__excise_unit_basis
 msgid "Unit Basis"
 msgstr "Enhetsbas"
 
@@ -174,15 +177,9 @@ msgstr "Punktskattevolym (L)"
 msgid "Excise Volume (L)"
 msgstr "Punktskattevolym (L)"
 
-#. module: l10n_se_excise_tax
-#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_account_tax__excise_unit_basis_display
-msgid "Unit Basis"
-msgstr "Enhetsbas"
-
 # --------------------------------------------------------------------
 # Nikotinskatt — excise types and taxes
 # --------------------------------------------------------------------
-
 #. module: l10n_se_excise_tax
 #: model:excise.tax.type,name:l10n_se_excise_tax.excise_type_nicotine_eliquid
 msgid "Nicotine — E-liquid (regular)"
@@ -216,18 +213,11 @@ msgstr "Nikotinskatt (övriga produkter, per kg)"
 # --------------------------------------------------------------------
 # product.template fields
 # --------------------------------------------------------------------
-
 #. module: l10n_se_excise_tax
 #: model:ir.model.fields,field_description:l10n_se_excise_tax.field_product_template__is_excise_taxable
 #: model:ir.model.fields,field_description:l10n_se_excise_tax.field_product_product__is_excise_taxable
 msgid "Excise Taxable"
 msgstr "Punktskattepliktig"
-
-#. module: l10n_se_excise_tax
-#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_product_template__excise_tax_type_id
-#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_product_product__excise_tax_type_id
-msgid "Excise Tax Type"
-msgstr "Punktskattetyp"
 
 #. module: l10n_se_excise_tax
 #: model:ir.model.fields,field_description:l10n_se_excise_tax.field_product_template__net_weight_excise
@@ -244,13 +234,13 @@ msgstr "Vikten som används specifikt för beräkning av punktskatten."
 #. module: l10n_se_excise_tax
 #: model:ir.model.fields,field_description:l10n_se_excise_tax.field_product_template__excise_reduction
 #: model:ir.model.fields,field_description:l10n_se_excise_tax.field_product_product__excise_reduction
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_excise_tax_default__excise_reduction
 msgid "Reduction Level"
 msgstr "Reduceringsnivå"
 
 # --------------------------------------------------------------------
 # account.tax fields
 # --------------------------------------------------------------------
-
 #. module: l10n_se_excise_tax
 #: model:ir.model.fields,field_description:l10n_se_excise_tax.field_account_tax__excise_type_id
 msgid "Linked Excise Type"
@@ -306,7 +296,6 @@ msgstr ""
 # --------------------------------------------------------------------
 # sale.order.line fields
 # --------------------------------------------------------------------
-
 #. module: l10n_se_excise_tax
 #: model:ir.model.fields,field_description:l10n_se_excise_tax.field_sale_order_line__excise_weight
 msgid "Excise Weight (kg)"
@@ -330,15 +319,17 @@ msgstr "Reduceringsfaktor för punktskatt"
 #: model:ir.model.fields,help:l10n_se_excise_tax.field_sale_order_line__excise_reduction_ratio
 msgid ""
 "Reduction factor applied to the weight-based excise amount. 1.0 = full tax, "
-"0.5 = 50% reduction, 0.1 = 90% reduction."
+"0.5 = 50% reduction, 0.05 = 95% reduction. Auto-populated from the product. "
+"Specific to Kemikalieskatt; non-kg excise types ignore it."
 msgstr ""
-"Reduceringsfaktor som tillämpas på det viktbaserade punktskattebeloppet. "
-"1,0 = full skatt, 0,5 = 50 % reducering, 0,1 = 90 % reducering."
+"Reduceringsfaktor som tillämpas på det viktbaserade punktskattebeloppet. 1,0"
+" = full skatt, 0,5 = 50 % reducering, 0,05 = 95 % reducering. Hämtas "
+"automatiskt från produkten. Specifik för Kemikalieskatt; ignoreras av andra "
+"punktskattetyper."
 
 # --------------------------------------------------------------------
 # account.move.line fields (source is already Swedish – keep identical)
 # --------------------------------------------------------------------
-
 #. module: l10n_se_excise_tax
 #: model:ir.model.fields,field_description:l10n_se_excise_tax.field_account_move_line__excise_weight
 msgid "Skattevikt (Snapshot)"
@@ -356,16 +347,20 @@ msgstr "Avdragsfaktor"
 
 #. module: l10n_se_excise_tax
 #: model:ir.model.fields,help:l10n_se_excise_tax.field_account_move_line__excise_reduction_ratio
-msgid "Reduktionsfaktor (1.0, 0.5 eller 0.1) vid faktureringstillfället."
-msgstr "Reduceringsfaktor (1,0, 0,5 eller 0,1) vid faktureringstillfället."
+msgid ""
+"Reduktionsfaktor (1.0, 0.5 eller 0.05) vid faktureringstillfället. Specifik "
+"för Kemikalieskatt; ignoreras av andra punktskattetyper."
+msgstr ""
+"Reduceringsfaktor (1,0, 0,5 eller 0,05) vid faktureringstillfället. Specifik"
+" för Kemikalieskatt; ignoreras av andra punktskattetyper."
 
 # --------------------------------------------------------------------
 # Actions & menus
 # --------------------------------------------------------------------
-
 #. module: l10n_se_excise_tax
 #: model:ir.actions.act_window,name:l10n_se_excise_tax.action_excise_tax_type
 #: model:ir.ui.menu,name:l10n_se_excise_tax.menu_excise_tax_type
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.product_template_excise_form_inherit
 msgid "Excise Tax Settings"
 msgstr "Punktskatteinställningar"
 
@@ -386,24 +381,6 @@ msgstr ""
 "                som används av viktbaserade punktskatter (t.ex. den\n"
 "                svenska kemikalieskatten). Varje typ kan kopplas till\n"
 "                en eller flera <em>account.tax</em>-poster."
-
-# --------------------------------------------------------------------
-# Views – product.template inherit
-# --------------------------------------------------------------------
-
-#. module: l10n_se_excise_tax
-#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.product_template_excise_form_inherit
-msgid "Excise Tax Settings"
-msgstr "Punktskatteinställningar"
-
-# --------------------------------------------------------------------
-# Views – excise.tax.type form
-# --------------------------------------------------------------------
-
-#. module: l10n_se_excise_tax
-#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.view_excise_tax_type_form
-msgid "Excise Tax Type"
-msgstr "Punktskattetyp"
 
 #. module: l10n_se_excise_tax
 #: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.view_excise_tax_type_form
@@ -428,27 +405,41 @@ msgstr "Så här används det:"
 #. module: l10n_se_excise_tax
 #: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.view_excise_tax_type_form
 msgid ""
-"For every product line\n"
+"<strong>How it's used:</strong> For every product line\n"
 "                        taxed with an <em>account.tax</em> of type\n"
 "                        <code>Swedish Excise Tax</code> linked to this record,\n"
 "                        the excise amount per unit is\n"
-"                        <code>net_weight_excise × tax_rate</code>,\n"
-"                        capped at <code>max_limit</code> and then multiplied\n"
-"                        by the line's reduction factor (100% / 50% / 10%)."
+"                        <code>quantity × tax_rate</code>, where\n"
+"                        <em>quantity</em> is the per-product field matching\n"
+"                        the chosen <strong>Unit Basis</strong>:\n"
+"                        <code>net_weight_excise</code> for kg, or\n"
+"                        <code>excise_volume_litres</code> for liter.\n"
+"                        For kg-based taxes the result is also\n"
+"                        capped at <code>max_limit</code> per unit and\n"
+"                        multiplied by the per-line reduction factor\n"
+"                        (Kemikalieskatt's 100% / 50% / 5% rule —\n"
+"                        i.e. full / half / 5 % of the rate is paid\n"
+"                        for products earning a 0 / 50 / 95 % reduction)."
 msgstr ""
-"För varje produktrad som\n"
+"<strong>Så här används det:</strong> För varje produktrad som\n"
 "                        beskattas med en <em>account.tax</em> av typen\n"
 "                        <code>Svensk punktskatt</code> kopplad till denna post,\n"
 "                        beräknas punktskatten per enhet som\n"
-"                        <code>net_weight_excise × tax_rate</code>,\n"
-"                        begränsad till <code>max_limit</code> och därefter\n"
-"                        multiplicerad med radens reduceringsfaktor\n"
-"                        (100 % / 50 % / 10 %)."
+"                        <code>quantity × tax_rate</code>, där\n"
+"                        <em>quantity</em> är det per-produkt-fält som matchar\n"
+"                        vald <strong>Enhetsbas</strong>:\n"
+"                        <code>net_weight_excise</code> för kg, eller\n"
+"                        <code>excise_volume_litres</code> för liter.\n"
+"                        För kg-baserade skatter begränsas resultatet\n"
+"                        dessutom till <code>max_limit</code> per enhet och\n"
+"                        multipliceras med radens reduceringsfaktor\n"
+"                        (Kemikalieskattens 100 % / 50 % / 5 %-regel —\n"
+"                        dvs. hel / halv / 5 % av satsen betalas\n"
+"                        för produkter med 0 / 50 / 95 % reducering)."
 
 # --------------------------------------------------------------------
 # Views – account.tax inherit (excise block + Posting Setup)
 # --------------------------------------------------------------------
-
 #. module: l10n_se_excise_tax
 #: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.view_tax_form_excise_inherit
 msgid ""
@@ -505,9 +496,9 @@ msgstr ""
 # account.tax demo data).  These translate the values set in
 # data/excise_tax_data.xml.
 # --------------------------------------------------------------------
-
 #. module: l10n_se_excise_tax
 #: model:account.tax.group,name:l10n_se_excise_tax.tax_group_excise
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.res_config_settings_view_form_l10n_se_excise_tax
 msgid "Swedish Excise Tax"
 msgstr "Svensk punktskatt"
 
@@ -534,7 +525,6 @@ msgstr "Kemikalieskatt (Vitvaror)"
 # --------------------------------------------------------------------
 # res.company display toggles
 # --------------------------------------------------------------------
-
 #. module: l10n_se_excise_tax
 #: model:ir.model,name:l10n_se_excise_tax.model_res_company
 msgid "Companies"
@@ -548,6 +538,7 @@ msgstr "Inställningar"
 #. module: l10n_se_excise_tax
 #: model:ir.model.fields,field_description:l10n_se_excise_tax.field_res_company__excise_show_as_separate_row
 #: model:ir.model.fields,field_description:l10n_se_excise_tax.field_res_config_settings__excise_show_as_separate_row
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.res_config_settings_view_form_l10n_se_excise_tax
 msgid "Show Excise Tax as Separate Row"
 msgstr "Visa punktskatt som egen rad"
 
@@ -564,12 +555,13 @@ msgstr ""
 "När aktiverad visas den svenska punktskatten på en egen rad mellan "
 "obeskattat belopp och moms på offerter, kundorder, fakturor samt deras PDF- "
 "och portalvisningar. När den är inaktiverad räknas punktskatten in i det "
-"obeskattade beloppet så att kunden inte ser någon separat rad (momsunderlaget "
-"och totalbeloppet är oförändrade)."
+"obeskattade beloppet så att kunden inte ser någon separat rad "
+"(momsunderlaget och totalbeloppet är oförändrade)."
 
 #. module: l10n_se_excise_tax
 #: model:ir.model.fields,field_description:l10n_se_excise_tax.field_res_company__hide_vat_column_on_documents
 #: model:ir.model.fields,field_description:l10n_se_excise_tax.field_res_config_settings__hide_vat_column_on_documents
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.res_config_settings_view_form_l10n_se_excise_tax
 msgid "Hide VAT Column on Documents"
 msgstr "Dölj momskolumnen i dokument"
 
@@ -579,36 +571,17 @@ msgstr "Dölj momskolumnen i dokument"
 msgid ""
 "Hide the per-line VAT / Moms / Taxes column (the one showing labels like "
 "'25% G, CHEM E') on quotations, sales orders and invoices when rendered as "
-"PDF or on the customer portal. The VAT row in the totals block stays "
-"visible in every case so the statutory VAT amount and rate are still "
-"disclosed. On the order / invoice form views the column is always visible "
-"but can be toggled from the column picker as usual."
+"PDF or on the customer portal. The VAT row in the totals block stays visible"
+" in every case so the statutory VAT amount and rate are still disclosed. On "
+"the order / invoice form views the column is always visible but can be "
+"toggled from the column picker as usual."
 msgstr ""
-"Dölj kolumnen Moms / Skatt per rad (den som visar etiketter som "
-"”25 % G, CHEM E”) på offerter, kundorder och fakturor när de renderas som "
-"PDF eller visas i kundportalen. Momsraden i totalblocket visas alltid, så "
-"det lagstadgade momsbeloppet och momssatsen redovisas fortfarande. I "
-"order- och fakturaformulären är kolumnen alltid synlig men kan döljas via "
+"Dölj kolumnen Moms / Skatt per rad (den som visar etiketter som ”25 % G, "
+"CHEM E”) på offerter, kundorder och fakturor när de renderas som PDF eller "
+"visas i kundportalen. Momsraden i totalblocket visas alltid, så det "
+"lagstadgade momsbeloppet och momssatsen redovisas fortfarande. I order- och "
+"fakturaformulären är kolumnen alltid synlig men kan döljas via "
 "kolumnväljaren som vanligt."
-
-# --------------------------------------------------------------------
-# Views – res.config.settings (Accounting settings page)
-# --------------------------------------------------------------------
-
-#. module: l10n_se_excise_tax
-#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.res_config_settings_view_form_l10n_se_excise_tax
-msgid "Swedish Excise Tax"
-msgstr "Svensk punktskatt"
-
-#. module: l10n_se_excise_tax
-#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.res_config_settings_view_form_l10n_se_excise_tax
-msgid "Show Excise Tax as Separate Row"
-msgstr "Visa punktskatt som egen rad"
-
-#. module: l10n_se_excise_tax
-#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.res_config_settings_view_form_l10n_se_excise_tax
-msgid "Hide VAT Column on Documents"
-msgstr "Dölj momskolumnen i dokument"
 
 #. module: l10n_se_excise_tax
 #: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.res_config_settings_view_form_l10n_se_excise_tax
@@ -629,7 +602,6 @@ msgstr ""
 # --------------------------------------------------------------------
 # res.partner – Approved Warehouse Keeper
 # --------------------------------------------------------------------
-
 #. module: l10n_se_excise_tax
 #: model:ir.model,name:l10n_se_excise_tax.model_res_partner
 msgid "Contact"
@@ -647,23 +619,22 @@ msgstr "Godkänd lagerhållare"
 msgid ""
 "Mark this partner as an Approved Warehouse Keeper (Swedish: 'Godkänd "
 "lagerhållare') — a company registered with Skatteverket to handle excise "
-"goods under deferred duty. When this is enabled, the Swedish chemical "
-"excise tax is NOT computed on quotations or invoices issued to this "
-"partner. The AWK is responsible for declaring and paying the tax "
-"themselves when they sell the goods on to a non-AWK end customer."
+"goods under deferred duty. When this is enabled, the Swedish chemical excise"
+" tax is NOT computed on quotations or invoices issued to this partner. The "
+"AWK is responsible for declaring and paying the tax themselves when they "
+"sell the goods on to a non-AWK end customer."
 msgstr ""
 "Markera denna kontakt som godkänd lagerhållare — ett företag som är "
-"registrerat hos Skatteverket för att hantera punktskattepliktiga varor "
-"med uppskjuten skatt. När detta är aktiverat beräknas INTE den svenska "
+"registrerat hos Skatteverket för att hantera punktskattepliktiga varor med "
+"uppskjuten skatt. När detta är aktiverat beräknas INTE den svenska "
 "kemikalieskatten på offerter eller fakturor som ställs ut till denna "
 "kontakt. Den godkända lagerhållaren ansvarar själv för att deklarera och "
-"betala skatten när varorna säljs vidare till en slutkund som inte är "
-"godkänd lagerhållare."
+"betala skatten när varorna säljs vidare till en slutkund som inte är godkänd"
+" lagerhållare."
 
 # --------------------------------------------------------------------
 # Tobaksskatt — excise types and taxes
 # --------------------------------------------------------------------
-
 #. module: l10n_se_excise_tax
 #: model:excise.tax.type,name:l10n_se_excise_tax.excise_type_tobacco_cigarettes
 msgid "Tobacco — Cigarettes (per piece)"
@@ -723,3 +694,289 @@ msgstr "Tobaksskatt (tuggtobak, per kg)"
 #: model:account.tax,description:l10n_se_excise_tax.tax_tobacco_other
 msgid "Tobacco Tax (Other tobacco, per kg)"
 msgstr "Tobaksskatt (övrig tobak, per kg)"
+
+# --------------------------------------------------------------------
+# 19.0.5.0.0 — excise.tax.default model + Default Excise Tax Rules
+# --------------------------------------------------------------------
+#. module: l10n_se_excise_tax
+#: model:ir.model,name:l10n_se_excise_tax.model_excise_tax_default
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.view_excise_tax_default_form
+msgid "Default Excise Tax Rule"
+msgstr "Standardregel för punktskatt"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_excise_tax_default__name
+msgid "Rule Name"
+msgstr "Regelnamn"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,help:l10n_se_excise_tax.field_excise_tax_default__name
+msgid ""
+"Free-form label shown in the rules list. e.g. 'Electronics — high-rate "
+"Kemikalieskatt'."
+msgstr ""
+"Fritextbenämning som visas i regellistan. T.ex. 'Elektronik — Kemikalieskatt"
+" hög sats'."
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_excise_tax_default__sequence
+msgid "Sequence"
+msgstr "Ordning"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,help:l10n_se_excise_tax.field_excise_tax_default__sequence
+msgid ""
+"Used to order rules that share the same scope. Lower number = applied first."
+msgstr ""
+"Används för att sortera regler som har samma omfattning. Lägre nummer = "
+"tillämpas först."
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_excise_tax_default__active
+msgid "Active"
+msgstr "Aktiv"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,help:l10n_se_excise_tax.field_excise_tax_default__active
+msgid ""
+"Untick to keep the rule on file but stop it from applying to new products."
+msgstr ""
+"Avmarkera för att behålla regeln men sluta tillämpa den på nya produkter."
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_excise_tax_default__product_category_id
+msgid "Product Category"
+msgstr "Produktkategori"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,help:l10n_se_excise_tax.field_excise_tax_default__product_category_id
+msgid ""
+"Apply this default only to products whose Internal Category matches. Leave "
+"empty to apply to ALL products as a fallback. Category-specific rules win "
+"over the all-products fallback."
+msgstr ""
+"Tillämpa denna standard endast på produkter vars interna kategori matchar. "
+"Lämna tomt för att tillämpa på ALLA produkter som reserv. Kategorispecifika "
+"regler vinner över reservregeln för alla produkter."
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_excise_tax_default__excise_tax_id
+msgid "Default Excise Tax"
+msgstr "Standardpunktskatt"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,help:l10n_se_excise_tax.field_excise_tax_default__excise_tax_id
+msgid ""
+"The swedish_excise account.tax to add to a matching product's Customer "
+"Taxes. The product's Excise Type is set automatically to this tax's linked "
+"Excise Type."
+msgstr ""
+"Den account.tax av typen swedish_excise som läggs till i en matchande "
+"produkts kundskatter. Produktens Punktskattetyp sätts automatiskt till den "
+"punktskattetyp som denna skatt är kopplad till."
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_excise_tax_default__excise_tax_type_id
+msgid "Excise Type"
+msgstr "Punktskattetyp"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_excise_tax_default__excise_has_reduction_levels
+msgid "Has Reduction Levels"
+msgstr "Har reduceringsnivåer"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,help:l10n_se_excise_tax.field_excise_tax_default__excise_reduction
+msgid ""
+"Reduction level to assign to matching products. Only meaningful for excise "
+"types that have reduction support (Kemikalieskatt). Ignored for nicotine, "
+"tobacco, and other regimes."
+msgstr ""
+"Reduceringsnivå som tilldelas matchande produkter. Endast meningsfullt för "
+"punktskattetyper som har stöd för reducering (Kemikalieskatt). Ignoreras för"
+" nikotin, tobak och övriga punktskatter."
+
+# --------------------------------------------------------------------
+# Default Excise Tax Rules — action, menu, list, form, alert, server
+# action and notification.
+# --------------------------------------------------------------------
+#. module: l10n_se_excise_tax
+#: model:ir.actions.act_window,name:l10n_se_excise_tax.action_excise_tax_default
+#: model:ir.ui.menu,name:l10n_se_excise_tax.menu_excise_tax_default
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.view_excise_tax_default_form
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.view_excise_tax_default_list
+msgid "Default Excise Tax Rules"
+msgstr "Standardregler för punktskatt"
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.actions.act_window,help:l10n_se_excise_tax.action_excise_tax_default
+msgid "Add a default excise tax rule"
+msgstr "Lägg till en standardregel för punktskatt"
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.actions.act_window,help:l10n_se_excise_tax.action_excise_tax_default
+msgid ""
+"Default rules tell the module which excise tax to apply to new products: "
+"either to a specific Internal Category, or as a fallback for all products. "
+"They include all the per-product extras, e.g. the Kemikalieskatt Reduction "
+"Level (0 / 50 / 95 %), so accountants only fill the rule once and matching "
+"products inherit a complete configuration."
+msgstr ""
+"Standardregler talar om för modulen vilken punktskatt som ska tillämpas på "
+"nya produkter: antingen för en specifik intern kategori eller som "
+"reservregel för alla produkter. De innehåller alla per-produkt-"
+"inställningar, t.ex. Kemikalieskattens reduceringsnivå (0 / 50 / 95 %), så "
+"att redovisningsekonomen bara behöver fylla i regeln en gång och matchande "
+"produkter ärver en komplett konfiguration."
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.view_excise_tax_default_form
+msgid "e.g. Electronics — Kemikalieskatt high rate"
+msgstr "t.ex. Elektronik — Kemikalieskatt hög sats"
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.view_excise_tax_default_form
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.view_excise_tax_default_list
+msgid "(All Products — fallback)"
+msgstr "(Alla produkter — reserv)"
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.view_excise_tax_default_form
+msgid "Scope"
+msgstr "Omfattning"
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.view_excise_tax_default_form
+msgid "Defaults Applied"
+msgstr "Tillämpade standardvärden"
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.view_excise_tax_default_form
+msgid "How rules are matched:"
+msgstr "Så här matchas reglerna:"
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.view_excise_tax_default_form
+msgid ""
+"when a product is flagged\n"
+"                        <em>Excise Taxable</em> (or its Internal Category\n"
+"                        is changed) and no excise tax is configured yet,\n"
+"                        the most specific rule wins:"
+msgstr ""
+"när en produkt markeras som\n"
+"                        <em>Punktskattepliktig</em> (eller dess interna\n"
+"                        kategori ändras) och ingen punktskatt är\n"
+"                        konfigurerad ännu vinner den mest specifika regeln:"
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.view_excise_tax_default_form
+msgid ""
+"first an active rule with a matching\n"
+"                                <em>Product Category</em> (lowest\n"
+"                                <em>Sequence</em> wins),"
+msgstr ""
+"först en aktiv regel med matchande\n"
+"                                <em>Produktkategori</em> (lägsta\n"
+"                                <em>Ordning</em> vinner),"
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.view_excise_tax_default_form
+msgid ""
+"if none, an active rule with no\n"
+"                                <em>Product Category</em> (the\n"
+"                                <em>All Products</em> fallback)."
+msgstr ""
+"om ingen finns, en aktiv regel utan\n"
+"                                <em>Produktkategori</em> (reservregeln\n"
+"                                för <em>Alla produkter</em>)."
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.view_excise_tax_default_form
+msgid ""
+"The matched rule sets the product's\n"
+"                        <em>Excise Tax Type</em>, adds the linked\n"
+"                        <em>account.tax</em> to its Customer Taxes and,\n"
+"                        when relevant, sets the per-product\n"
+"                        Kemikalieskatt <em>Reduction Level</em>."
+msgstr ""
+"Den matchande regeln sätter produktens\n"
+"                        <em>Punktskattetyp</em>, lägger till den kopplade\n"
+"                        <em>account.tax</em> bland dess kundskatter och,\n"
+"                        när det är relevant, sätter Kemikalieskattens\n"
+"                        per-produkt-<em>Reduceringsnivå</em>."
+
+#. module: l10n_se_excise_tax
+#: model:ir.actions.server,name:l10n_se_excise_tax.action_server_apply_excise_defaults
+msgid "Apply Excise Defaults"
+msgstr "Tillämpa punktskatte-standarder"
+
+#. module: l10n_se_excise_tax
+#. odoo-python
+#: code:addons/l10n_se_excise_tax/models/excise_tax.py:0
+msgid "Excise Defaults Applied"
+msgstr "Punktskatte-standarder tillämpade"
+
+#. module: l10n_se_excise_tax
+#. odoo-python
+#: code:addons/l10n_se_excise_tax/models/excise_tax.py:0
+msgid ""
+"%(applied)s of %(total)s product(s) updated. Products already configured for"
+" excise were left unchanged."
+msgstr ""
+"%(applied)s av %(total)s produkt(er) uppdaterade. Produkter som redan var "
+"konfigurerade för punktskatt lämnades oförändrade."
+
+# --------------------------------------------------------------------
+# Settings page — shortcuts to the configuration menus
+# --------------------------------------------------------------------
+#. module: l10n_se_excise_tax
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.res_config_settings_view_form_l10n_se_excise_tax
+msgid "Excise Tax Types"
+msgstr "Punktskattetyper"
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.res_config_settings_view_form_l10n_se_excise_tax
+msgid ""
+"Maintain the per-unit rate, cap, unit basis and reduction support for each "
+"Swedish excise type (Kemikalieskatt, Tobaksskatt, Nikotinskatt, …). "
+"Confirmed orders and posted invoices are immune to later rate changes — they"
+" keep the snapshot they had at validation time."
+msgstr ""
+"Underhåll skattesatsen per enhet, taket, enhetsbasen och stödet för "
+"reducering för varje svensk punktskattetyp (Kemikalieskatt, Tobaksskatt, "
+"Nikotinskatt, …). Bekräftade kundorder och bokförda fakturor påverkas inte "
+"av senare ändringar — de behåller den ögonblicksbild de hade vid "
+"valideringstillfället."
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.res_config_settings_view_form_l10n_se_excise_tax
+msgid ""
+"Set a default excise tax for a product category (or as an 'all products' "
+"fallback), with the matching reduction level for Kemikalieskatt. New "
+"products inherit the configuration the moment Excise Taxable is ticked or "
+"the Internal Category is changed; existing products can be retro-updated via"
+" Action → Apply Excise Defaults in the product list."
+msgstr ""
+"Sätt en standard-punktskatt för en produktkategori (eller som reservregel "
+"för 'alla produkter') tillsammans med rätt reduceringsnivå för "
+"Kemikalieskatten. Nya produkter ärver konfigurationen i det ögonblick "
+"Punktskattepliktig markeras eller Intern kategori ändras; befintliga "
+"produkter kan uppdateras i efterhand via Åtgärd → Tillämpa punktskatte-"
+"standarder i produktlistan."
+
+# --------------------------------------------------------------------
+# product.template — Reduction Level help text (updated for 50/95)
+# --------------------------------------------------------------------
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,help:l10n_se_excise_tax.field_product_template__excise_reduction
+#: model:ir.model.fields,help:l10n_se_excise_tax.field_product_product__excise_reduction
+msgid ""
+"Per-product reduction applied AFTER the per-unit cap. Specific to Kemikalieskatt rules: per Lag (2016:1067) and Skatteverket guidance, products earn:\n"
+"  - 50% reduction if they contain no bromine or chlorine compounds (>0.1 wt% of the homogeneous plastic / circuit-board material).\n"
+"  - 95% reduction if they contain none of bromine, chlorine, OR phosphorus compounds.\n"
+"For other excise regimes (nicotine, tobacco, alcohol, …) leave this at 'No Reduction'."
+msgstr ""
+"Per-produkt-reducering som tillämpas EFTER per-enhets-taket. Specifik för Kemikalieskattens regler: enligt Lag (2016:1067) och Skatteverkets vägledning får produkter:\n"
+"  - 50 % reducering om de inte innehåller brom- eller klorföreningar (>0,1 vikt-% av det homogena plast- eller kretskortsmaterialet).\n"
+"  - 95 % reducering om de inte innehåller brom-, klor- ELLER fosforföreningar.\n"
+"För andra punktskatter (nikotin, tobak, alkohol, …) lämna detta på 'Ingen reducering'."

@@ -42,7 +42,7 @@ class AccountMoveLine(models.Model):
         compute='_compute_excise_snapshot',
         store=True,
         readonly=False,
-        help="Reduktionsfaktor (1.0, 0.5 eller 0.1) vid faktureringstillfället. "
+        help="Reduktionsfaktor (1.0, 0.5 eller 0.05) vid faktureringstillfället. "
              "Specifik för Kemikalieskatt; ignoreras av andra punktskattetyper.",
     )
 
@@ -52,8 +52,11 @@ class AccountMoveLine(models.Model):
         ``product_id`` is set / changed. See sale.order.line for the
         rationale (compute fires on programmatic create() too,
         unlike @api.onchange).
+
+        50 % → ratio 0.5, 95 % → ratio 0.05. Per Skatteverket
+        Lag (2016:1067).
         """
-        mapping = {'0': 1.0, '50': 0.5, '90': 0.1}
+        mapping = {'0': 1.0, '50': 0.5, '95': 0.05}
         for line in self:
             product = line.product_id
             if product and product.is_excise_taxable:

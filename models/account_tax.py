@@ -109,7 +109,7 @@ class AccountTax(models.Model):
         :param float weight:          Snapshot weight (kg) — kg basis.
         :param float volume:          Snapshot volume (L) — liter basis.
         :param float pieces:          Snapshot piece count — pcs basis.
-        :param float reduction_ratio: 1.0 / 0.5 / 0.1 — kg basis only,
+        :param float reduction_ratio: 1.0 / 0.5 / 0.05 — kg basis only,
                                        only when ``has_reduction_levels``
                                        is True on the excise type.
         :return float: Per-unit excise amount in company currency.

@@ -124,7 +124,9 @@
                         For kg-based taxes the result is also
                         capped at <code>max_limit</code> per unit and
                         multiplied by the per-line reduction factor
-                        (Kemikalieskatt's 100% / 50% / 10% rule).
+                        (Kemikalieskatt's 100% / 50% / 5% rule —
+                        i.e. full / half / 5 % of the rate is paid
+                        for products earning a 0 / 50 / 95 % reduction).
                     </div>
                 </sheet>
             </form>

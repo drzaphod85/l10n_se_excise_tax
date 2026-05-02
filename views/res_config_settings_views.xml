@@ -61,6 +61,54 @@
                         </div>
                     </setting>
 
+                    <!--
+                        Convenience links to the two configuration
+                        actions that don't fit into a Settings toggle
+                        (they're "lists of records", not booleans).
+                        Surfaced here so users browsing the Settings
+                        page actually find them — without this they're
+                        only reachable from
+                        Accounting → Configuration → ….
+                    -->
+                    <setting id="l10n_se_excise_types_link_setting"
+                             string="Excise Tax Types"
+                             help="Maintain the per-unit rate, cap,
+                                   unit basis and reduction support
+                                   for each Swedish excise type
+                                   (Kemikalieskatt, Tobaksskatt,
+                                   Nikotinskatt, …). Confirmed orders
+                                   and posted invoices are immune to
+                                   later rate changes — they keep
+                                   the snapshot they had at
+                                   validation time.">
+                        <button name="%(l10n_se_excise_tax.action_excise_tax_type)d"
+                                icon="oi-arrow-right"
+                                type="action"
+                                string="Excise Tax Types"
+                                class="btn-link"/>
+                    </setting>
+
+                    <setting id="l10n_se_excise_defaults_link_setting"
+                             string="Default Excise Tax Rules"
+                             help="Set a default excise tax for a
+                                   product category (or as an
+                                   'all products' fallback), with
+                                   the matching reduction level for
+                                   Kemikalieskatt. New products
+                                   inherit the configuration the
+                                   moment Excise Taxable is ticked
+                                   or the Internal Category is
+                                   changed; existing products can
+                                   be retro-updated via Action →
+                                   Apply Excise Defaults in the
+                                   product list.">
+                        <button name="%(l10n_se_excise_tax.action_excise_tax_default)d"
+                                icon="oi-arrow-right"
+                                type="action"
+                                string="Default Excise Tax Rules"
+                                class="btn-link"/>
+                    </setting>
+
                 </block>
             </xpath>
         </field>

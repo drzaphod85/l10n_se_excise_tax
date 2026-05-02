@@ -128,15 +128,20 @@ class ProductTemplate(models.Model):
         [
             ('0', 'No Reduction (100%)'),
             ('50', '50% Reduction'),
-            ('90', '90% Reduction'),
+            ('95', '95% Reduction'),
         ],
         string="Reduction Level",
         default='0',
         help="Per-product reduction applied AFTER the per-unit cap. "
-             "Specific to Kemikalieskatt rules (50%/90% for products "
-             "containing certain flame-retardants). For other excise "
-             "regimes (nicotine, alcohol, …) leave this at 'No "
-             "Reduction'.",
+             "Specific to Kemikalieskatt rules: per Lag (2016:1067) "
+             "and Skatteverket guidance, products earn:\n"
+             "  - 50% reduction if they contain no bromine or "
+             "    chlorine compounds (>0.1 wt% of the homogeneous "
+             "    plastic / circuit-board material).\n"
+             "  - 95% reduction if they contain none of bromine, "
+             "    chlorine, OR phosphorus compounds.\n"
+             "For other excise regimes (nicotine, tobacco, alcohol, "
+             "…) leave this at 'No Reduction'.",
     )
 
     # ------------------------------------------------------------------
@@ -183,7 +188,7 @@ class ProductTemplate(models.Model):
         product-level value matches what the engine will compute for
         a sale-order or invoice line carrying this product.
         """
-        reduction_map = {'0': 1.0, '50': 0.5, '90': 0.1}
+        reduction_map = {'0': 1.0, '50': 0.5, '95': 0.05}
         for product in self:
             amount = 0.0
             if product.is_excise_taxable:
@@ -236,3 +241,132 @@ class ProductTemplate(models.Model):
         string="Excise Has Reductions",
         readonly=True,
     )
+
+    # ------------------------------------------------------------------
+    # Default-rule integration. The actual rule lookup lives in
+    # ``excise.tax.default._find_for_product``; this method applies a
+    # matched rule to the product. It's invoked from:
+    #
+    #   * the Excise Taxable / category onchanges below — so a fresh
+    #     product picks up the right defaults the moment the user
+    #     ticks "Excise Taxable" or sets / changes the Internal
+    #     Category;
+    #   * the ``action_apply_excise_defaults`` server action — for
+    #     bulk back-applying rules to products that pre-date the rule
+    #     (or whose category was changed before the rule was added).
+    #
+    # The applier is conservative: it never overwrites an excise type
+    # the user has already configured on the product, and it never
+    # removes or replaces existing taxes in ``taxes_id``. It only
+    # adds the rule's tax if no swedish_excise tax is already linked.
+    # That keeps "Apply Defaults" idempotent and safe to run over a
+    # large selection of products.
+    # ------------------------------------------------------------------
+    def _apply_excise_default(self, force=False):
+        """Apply the matching ``excise.tax.default`` rule to ``self``.
+
+        :param bool force:
+            When False (the default), the method skips products that
+            already have an ``excise_tax_type_id`` set or already
+            carry a ``swedish_excise`` tax in ``taxes_id`` — those
+            are considered configured by the user and left alone.
+
+            When True, the rule's values overwrite the product's
+            current excise type / reduction and the rule's tax is
+            added if not already present (existing excise taxes are
+            still NOT removed — bulk-applying defaults is meant to
+            be additive, not destructive).
+
+        Returns the recordset of products that were actually modified
+        (handy for the server action's success notification).
+        """
+        Default = self.env['excise.tax.default']
+        modified = self.browse()
+        for product in self:
+            rule = Default._find_for_product(product)
+            if not rule:
+                continue
+
+            already_typed = bool(product.excise_tax_type_id)
+            already_taxed = bool(product.taxes_id.filtered(
+                lambda t: t.amount_type == 'swedish_excise'
+            ))
+            if not force and (already_typed or already_taxed):
+                continue
+
+            vals = {'is_excise_taxable': True}
+            if force or not already_typed:
+                vals['excise_tax_type_id'] = rule.excise_tax_type_id.id
+            # Reduction is only meaningful when the linked type
+            # supports it. ``excise_reduction`` defaults to '0' on
+            # rules that don't, so writing it is harmless either
+            # way, but skipping it keeps the audit trail tidy on
+            # types without reductions.
+            if rule.excise_has_reduction_levels:
+                if force or not product.excise_reduction \
+                        or product.excise_reduction == '0':
+                    vals['excise_reduction'] = rule.excise_reduction or '0'
+            product.write(vals)
+
+            if rule.excise_tax_id and rule.excise_tax_id not in product.taxes_id:
+                product.taxes_id = [(4, rule.excise_tax_id.id)]
+
+            modified |= product
+        return modified
+
+    @api.onchange('is_excise_taxable', 'categ_id')
+    def _onchange_apply_excise_default(self):
+        """Suggest defaults when the user ticks Excise Taxable or
+        changes the Internal Category and the product hasn't been
+        configured for excise yet.
+
+        Onchange-only (no DB write) — the user can still edit the
+        suggestion before saving. Skipping when the user has already
+        chosen an excise type avoids surprising overwrites.
+        """
+        for product in self:
+            if not product.is_excise_taxable:
+                continue
+            if product.excise_tax_type_id:
+                continue
+            rule = self.env['excise.tax.default']._find_for_product(product)
+            if not rule:
+                continue
+            product.excise_tax_type_id = rule.excise_tax_type_id
+            if rule.excise_has_reduction_levels:
+                product.excise_reduction = rule.excise_reduction or '0'
+            if rule.excise_tax_id \
+                    and rule.excise_tax_id not in product.taxes_id:
+                product.taxes_id = [(4, rule.excise_tax_id.id)]
+
+    def action_apply_excise_defaults(self):
+        """Server action — bulk-apply default rules to a selection.
+
+        Designed to be wired up as an
+        ``ir.actions.server`` (model_id = product.template,
+        binding_model_id = product.template, state = code,
+        code = ``records.action_apply_excise_defaults()``).
+
+        Conservative by default (``force=False``): products already
+        configured for excise are left alone, so the action can be
+        run repeatedly and over large selections without disrupting
+        manual overrides.
+        """
+        modified = self._apply_excise_default(force=False)
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _("Excise Defaults Applied"),
+                'message': _(
+                    "%(applied)s of %(total)s product(s) updated. "
+                    "Products already configured for excise were "
+                    "left unchanged."
+                ) % {
+                    'applied': len(modified),
+                    'total': len(self),
+                },
+                'type': 'success',
+                'sticky': False,
+            },
+        }

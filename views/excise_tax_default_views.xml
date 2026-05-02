@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        List view: editable so accountants can rattle off a few rules
+        without context-switching into the form. The category column is
+        optional/visible-by-default since the most common use case is
+        "this category gets this excise tax". The reduction column only
+        makes sense for Kemikalieskatt-style rules; it's still shown so
+        the user can spot reduction settings at a glance.
+    -->
+    <record id="view_excise_tax_default_list" model="ir.ui.view">
+        <field name="name">excise.tax.default.list</field>
+        <field name="model">excise.tax.default</field>
+        <field name="arch" type="xml">
+            <list string="Default Excise Tax Rules" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="product_category_id"
+                       optional="show"
+                       placeholder="(All Products — fallback)"/>
+                <field name="excise_tax_id"/>
+                <field name="excise_tax_type_id" optional="hide"/>
+                <field name="excise_unit_basis" optional="hide"/>
+                <field name="excise_has_reduction_levels"
+                       optional="hide"
+                       string="Has Reductions"/>
+                <field name="excise_reduction"
+                       column_invisible="0"
+                       optional="show"/>
+                <field name="active" optional="hide" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_excise_tax_default_form" model="ir.ui.view">
+        <field name="name">excise.tax.default.form</field>
+        <field name="model">excise.tax.default</field>
+        <field name="arch" type="xml">
+            <form string="Default Excise Tax Rule">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name"
+                                   placeholder="e.g. Electronics — Kemikalieskatt high rate"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Scope">
+                            <field name="product_category_id"
+                                   placeholder="(All Products — fallback)"/>
+                            <field name="sequence"/>
+                            <field name="active"/>
+                        </group>
+                        <group string="Defaults Applied">
+                            <field name="excise_tax_id"/>
+                            <field name="excise_tax_type_id" readonly="1"/>
+                            <field name="excise_unit_basis" readonly="1"/>
+                            <field name="excise_has_reduction_levels" invisible="1"/>
+                            <field name="excise_reduction"
+                                   widget="radio"
+                                   invisible="not excise_has_reduction_levels"/>
+                        </group>
+                    </group>
+                    <div class="alert alert-info" role="alert">
+                        <strong>How rules are matched:</strong>
+                        when a product is flagged
+                        <em>Excise Taxable</em> (or its Internal Category
+                        is changed) and no excise tax is configured yet,
+                        the most specific rule wins:
+                        <ol class="mb-0">
+                            <li>
+                                first an active rule with a matching
+                                <em>Product Category</em> (lowest
+                                <em>Sequence</em> wins),
+                            </li>
+                            <li>
+                                if none, an active rule with no
+                                <em>Product Category</em> (the
+                                <em>All Products</em> fallback).
+                            </li>
+                        </ol>
+                        The matched rule sets the product's
+                        <em>Excise Tax Type</em>, adds the linked
+                        <em>account.tax</em> to its Customer Taxes and,
+                        when relevant, sets the per-product
+                        Kemikalieskatt <em>Reduction Level</em>.
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_excise_tax_default" model="ir.actions.act_window">
+        <field name="name">Default Excise Tax Rules</field>
+        <field name="res_model">excise.tax.default</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Add a default excise tax rule
+            </p>
+            <p>
+                Default rules tell the module which excise tax to apply
+                to new products: either to a specific Internal Category,
+                or as a fallback for all products. They include all the
+                per-product extras, e.g. the Kemikalieskatt
+                Reduction Level (0 / 50 / 95 %), so accountants only
+                fill the rule once and matching products inherit a
+                complete configuration.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_excise_tax_default"
+              name="Default Excise Tax Rules"
+              parent="account.menu_finance_configuration"
+              action="action_excise_tax_default"
+              sequence="101"/>
+
+    <!--
+        Server action surfaced in the Action menu of the product list
+        so an accountant can retro-apply the rules to a selection of
+        existing products. The action only touches products that
+        aren't already configured for excise (force=False) — that
+        keeps it idempotent and safe to run repeatedly.
+    -->
+    <record id="action_server_apply_excise_defaults" model="ir.actions.server">
+        <field name="name">Apply Excise Defaults</field>
+        <field name="model_id" ref="product.model_product_template"/>
+        <field name="binding_model_id" ref="product.model_product_template"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_apply_excise_defaults()</field>
+    </record>
+
+</odoo>
