@@ -22,30 +22,28 @@
                        id="l10n_se_excise_tax_block"
                        name="l10n_se_excise_tax_block">
 
+                    <!--
+                        IMPORTANT — keep every ``help=`` attribute
+                        below on a SINGLE LINE. Odoo extracts the raw
+                        attribute value as the translation msgid, and
+                        XML preserves embedded newlines + indentation
+                        verbatim, so a multi-line help= produces a
+                        msgid full of "\n   " runs that no .po entry
+                        can practically match. Pre-19.0.5 versions of
+                        this view had multi-line help= attributes and
+                        their Swedish translations silently failed to
+                        apply — keep them on one line and the sv.po
+                        round-trip just works.
+                    -->
                     <setting id="l10n_se_excise_show_row_setting"
                              title="Show Excise Tax as Separate Row"
-                             help="Whether the Swedish excise tax
-                                   appears as its own row between
-                                   Untaxed Amount and VAT on
-                                   quotations, sales orders, invoices
-                                   and their PDF / portal renderings.
-                                   When disabled, the excise amount is
-                                   folded into Untaxed Amount (VAT
-                                   base and total are unchanged).">
+                             help="Whether the Swedish excise tax appears as its own row between Untaxed Amount and VAT on quotations, sales orders, invoices and their PDF / portal renderings. When disabled, the excise amount is folded into Untaxed Amount (VAT base and total are unchanged).">
                         <field name="excise_show_as_separate_row"/>
                     </setting>
 
                     <setting id="l10n_se_hide_vat_column_setting"
                              title="Hide VAT Column on Documents"
-                             help="Hide the Moms / VAT / Taxes
-                                   column from the line table on
-                                   quotation PDFs, order PDFs,
-                                   invoice PDFs and the customer
-                                   portal. The column is still
-                                   available on the internal form
-                                   view (toggle it via the column
-                                   picker if you don't want to see
-                                   it there either).">
+                             help="Hide the Moms / VAT / Taxes column from the line table on quotation PDFs, order PDFs, invoice PDFs and the customer portal. The column is still available on the internal form view (toggle it via the column picker if you don't want to see it there either).">
                         <field name="hide_vat_column_on_documents"/>
                         <div class="text-muted mt8"
                              invisible="not hide_vat_column_on_documents">
@@ -72,15 +70,7 @@
                     -->
                     <setting id="l10n_se_excise_types_link_setting"
                              string="Excise Tax Types"
-                             help="Maintain the per-unit rate, cap,
-                                   unit basis and reduction support
-                                   for each Swedish excise type
-                                   (Kemikalieskatt, Tobaksskatt,
-                                   Nikotinskatt, …). Confirmed orders
-                                   and posted invoices are immune to
-                                   later rate changes — they keep
-                                   the snapshot they had at
-                                   validation time.">
+                             help="Maintain the per-unit rate, cap, unit basis and reduction support for each Swedish excise type (Kemikalieskatt, Tobaksskatt, Nikotinskatt, …). Confirmed orders and posted invoices are immune to later rate changes — they keep the snapshot they had at validation time.">
                         <button name="%(l10n_se_excise_tax.action_excise_tax_type)d"
                                 icon="oi-arrow-right"
                                 type="action"
@@ -90,18 +80,7 @@
 
                     <setting id="l10n_se_excise_defaults_link_setting"
                              string="Default Excise Tax Rules"
-                             help="Set a default excise tax for a
-                                   product category (or as an
-                                   'all products' fallback), with
-                                   the matching reduction level for
-                                   Kemikalieskatt. New products
-                                   inherit the configuration the
-                                   moment Excise Taxable is ticked
-                                   or the Internal Category is
-                                   changed; existing products can
-                                   be retro-updated via Action →
-                                   Apply Excise Defaults in the
-                                   product list.">
+                             help="Set a default excise tax for a product category (or as an 'all products' fallback), with the matching reduction level for Kemikalieskatt. New products inherit the configuration the moment Excise Taxable is ticked or the Internal Category is changed; existing products can be retro-updated via Action → Apply Excise Defaults in the product list.">
                         <button name="%(l10n_se_excise_tax.action_excise_tax_default)d"
                                 icon="oi-arrow-right"
                                 type="action"

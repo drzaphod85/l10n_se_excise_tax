@@ -3,3 +3,5 @@ access_excise_tax_type_all,excise.tax.type.all,model_excise_tax_type,base.group_
 access_excise_tax_type_manager,excise.tax.type.manager,model_excise_tax_type,account.group_account_manager,1,1,1,1
 access_excise_tax_default_user,excise.tax.default.user,model_excise_tax_default,base.group_user,1,0,0,0
 access_excise_tax_default_manager,excise.tax.default.manager,model_excise_tax_default,account.group_account_manager,1,1,1,1
+access_excise_declaration_wizard,excise.declaration.wizard.manager,model_excise_declaration_wizard,account.group_account_manager,1,1,1,1
+access_excise_declaration_wizard_billing,excise.declaration.wizard.billing,model_excise_declaration_wizard,account.group_account_invoice,1,1,1,1

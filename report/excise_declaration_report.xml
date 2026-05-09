@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        ir.actions.report record. Renders one A4 page per period
+        (the wizard is single-record, so the report only ever
+        renders ``self.id`` once).
+
+        File name pattern uses date_from / date_to so the saved PDF
+        is self-describing on disk:
+            kemikalieskatt-2026-01-2026-01-31.pdf
+    -->
+    <record id="action_report_kemikalieskatt_declaration"
+            model="ir.actions.report">
+        <field name="name">Kemikalieskatt-deklaration</field>
+        <field name="model">excise.declaration.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">l10n_se_excise_tax.report_kemikalieskatt_declaration</field>
+        <field name="report_file">l10n_se_excise_tax.report_kemikalieskatt_declaration</field>
+        <field name="print_report_name">'kemikalieskatt-%s-%s' % (object.date_from, object.date_to)</field>
+        <field name="binding_model_id" eval="False"/>
+    </record>
+
+    <!--
+        QWeb document template. Loops over the wizard's computed
+        per-type buckets and renders one section per excise type
+        with the four-column declaration grid Skatteverket asks
+        for: weight, brutto, avdrag, netto.
+    -->
+    <template id="report_kemikalieskatt_declaration_document">
+        <t t-call="web.external_layout">
+            <t t-set="company"
+               t-value="o.company_id or res_company"/>
+            <t t-set="declaration_data"
+               t-value="o._compute_kemikalieskatt_declaration()"/>
+            <t t-set="types" t-value="declaration_data[0]"/>
+            <t t-set="grand_total" t-value="declaration_data[1]"/>
+
+            <div class="page">
+                <h2>Punktskattedeklaration — Kemikalieskatt</h2>
+                <div class="row mt-2 mb-3">
+                    <div class="col-6">
+                        <strong>Företag:</strong>
+                        <span t-field="company.name"/><br/>
+                        <strong>Org.nr:</strong>
+                        <span t-field="company.vat"/>
+                    </div>
+                    <div class="col-6 text-end">
+                        <strong>Period:</strong>
+                        <span t-field="o.date_from"/>
+                        – <span t-field="o.date_to"/><br/>
+                        <strong>Utskriftsdatum:</strong>
+                        <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d')"/>
+                    </div>
+                </div>
+
+                <p class="text-muted mb-4">
+                    <small>
+                        Aggregerade siffror från bokförda kund-
+                        fakturor och kreditfakturor i den valda
+                        perioden. Per Lag (2016:1067) §15 styrs
+                        skattepliktens inträde av fakturadatumet
+                        (<em>invoice_date</em>), inte av
+                        bokföringsdatumet. Beräkning per rad använder
+                        snapshot-värdena
+                        <code>excise_weight</code> och
+                        <code>excise_reduction_ratio</code> som
+                        fanns vid bokföringstillfället, så historiska
+                        rader påverkas inte av efteråt-ändrade
+                        produktdata.
+                    </small>
+                </p>
+
+                <t t-if="not types">
+                    <div class="alert alert-warning">
+                        Inga bokförda Kemikalieskatt-fakturor
+                        hittades i perioden
+                        <span t-field="o.date_from"/> –
+                        <span t-field="o.date_to"/>.
+                    </div>
+                </t>
+
+                <t t-foreach="types" t-as="t">
+                    <h3 class="mt-4">
+                        <span t-esc="t['excise_type'].name"/>
+                    </h3>
+                    <p class="text-muted mb-2">
+                        <small>
+                            Skattesats:
+                            <strong>
+                                <span t-esc="'%.2f' % t['tax_rate']"
+                                      t-options="{'widget': 'text'}"/>
+                                kr/kg
+                            </strong>
+                            · Tak per styck:
+                            <strong>
+                                <span t-esc="'%.2f' % t['max_limit']"/>
+                                kr
+                            </strong>
+                        </small>
+                    </p>
+                    <table class="table table-sm table-bordered">
+                        <thead style="background:#f0f0f0;">
+                            <tr>
+                                <th>Avdragsnivå</th>
+                                <th class="text-end">Vikt (kg)</th>
+                                <th class="text-end">Brutto-skatt (kr)</th>
+                                <th class="text-end">Avdrag (kr)</th>
+                                <th class="text-end">Netto (kr)</th>
+                                <th class="text-end">Antal rader</th>
+                                <th class="text-end">Tak utlöst</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="t['reductions']" t-as="r">
+                                <td t-esc="r['label']"/>
+                                <td class="text-end">
+                                    <span t-esc="'%.3f' % r['kg']"/>
+                                </td>
+                                <td class="text-end">
+                                    <span t-esc="'%.2f' % r['brutto']"/>
+                                </td>
+                                <td class="text-end">
+                                    <span t-esc="'%.2f' % r['avdrag']"/>
+                                </td>
+                                <td class="text-end">
+                                    <strong>
+                                        <span t-esc="'%.2f' % r['netto']"/>
+                                    </strong>
+                                </td>
+                                <td class="text-end"
+                                    t-esc="r['lines']"/>
+                                <td class="text-end"
+                                    t-esc="r['cap_hits']"/>
+                            </tr>
+                            <tr style="background:#fafafa;">
+                                <td><em>Summa</em></td>
+                                <td class="text-end">
+                                    <em>
+                                        <span t-esc="'%.3f' % t['kg']"/>
+                                    </em>
+                                </td>
+                                <td class="text-end">
+                                    <em>
+                                        <span t-esc="'%.2f' % t['brutto']"/>
+                                    </em>
+                                </td>
+                                <td class="text-end">
+                                    <em>
+                                        <span t-esc="'%.2f' % t['avdrag']"/>
+                                    </em>
+                                </td>
+                                <td class="text-end">
+                                    <strong>
+                                        <span t-esc="'%.2f' % t['netto']"/>
+                                    </strong>
+                                </td>
+                                <td class="text-end"
+                                    t-esc="t['lines']"/>
+                                <td class="text-end"
+                                    t-esc="t['cap_hits']"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                </t>
+
+                <div class="mt-4 p-3"
+                     style="background:#e9f3ff;border:1px solid #99c2ff;">
+                    <h4 class="mb-2">Total skatt att betala</h4>
+                    <p class="m-0" style="font-size:1.4em;">
+                        <strong>
+                            <span t-esc="'%.2f kr' % grand_total"/>
+                        </strong>
+                    </p>
+                </div>
+
+                <div class="mt-4">
+                    <h5>Så här fyller du i Skatteverkets e-tjänst</h5>
+                    <ol>
+                        <li>
+                            Logga in på
+                            <em>skatteverket.se → e-tjänster →
+                            Punktskattedeklaration</em> med
+                            e-legitimation.
+                        </li>
+                        <li>
+                            Välj rätt period
+                            (<span t-field="o.date_from"/> –
+                            <span t-field="o.date_to"/>)
+                            och börja en ny deklaration för
+                            <em>Skatt på kemikalier i viss
+                            elektronik</em>.
+                        </li>
+                        <li>
+                            För varje produktgrupp ovan: ange
+                            <em>skattepliktig vikt</em> med tre
+                            decimaler (Skatteverket vill ha
+                            <em>bruttoredovisning</em>) och
+                            motsvarande
+                            <em>brutto-skatt</em>. Sedan anger du
+                            <em>avdrag</em> per avdragsnivå.
+                            E-tjänsten räknar fram netto.
+                        </li>
+                        <li>
+                            Verifiera att slutsumman matchar
+                            <strong>Total skatt att betala</strong>
+                            ovan, sedan signera.
+                        </li>
+                    </ol>
+                    <p class="text-muted">
+                        <small>
+                            Bokför netto-beloppet mot BAS-konto
+                            2616 (eller den fallback-kod modulen
+                            valt vid installation: 2615 / 2640 /
+                            2980). Hela siffer-spåret per
+                            faktura finns på
+                            <em>account.move.line</em>'s snapshot-
+                            fält och är tillgängligt för revision.
+                        </small>
+                    </p>
+                </div>
+
+                <p class="mt-4 text-muted">
+                    <small>
+                        <em>Genererad av l10n_se_excise_tax —
+                        denna utskrift är ett underlag, inte en
+                        deklaration. Den faktiska deklarationen
+                        sker hos Skatteverket.</em>
+                    </small>
+                </p>
+            </div>
+        </t>
+    </template>
+
+    <!--
+        The actual report template Odoo invokes. Standard wrapper
+        around web.html_container so multi-language layout (header,
+        footer, paper format) works correctly.
+    -->
+    <template id="report_kemikalieskatt_declaration">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="l10n_se_excise_tax.report_kemikalieskatt_declaration_document"/>
+            </t>
+        </t>
+    </template>
+
+</odoo>

@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Wizard form: pick a period, then preview / print.
+    -->
+    <record id="view_excise_declaration_wizard_form" model="ir.ui.view">
+        <field name="name">excise.declaration.wizard.form</field>
+        <field name="model">excise.declaration.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Kemikalieskatt — Punktskattedeklaration">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Kemikalieskatt — Punktskattedeklaration</h1>
+                        <p class="text-muted">
+                            Aggregerar bokförda kund-fakturor och kreditfakturor
+                            i den valda perioden, grupperat per produktgrupp
+                            (Vitvaror / Övrig elektronik) och avdragsnivå
+                            (0 % / 50 % / 95 %). Resultatet motsvarar
+                            fälten i Skatteverkets e-tjänst
+                            <em>Punktskattedeklaration — Skatt på kemikalier
+                            i viss elektronik</em>.
+                        </p>
+                    </div>
+                    <group>
+                        <group string="Period">
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                        </group>
+                        <group string="Företag">
+                            <field name="company_id"
+                                   groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_view_report"
+                            type="object"
+                            string="Förhandsgranska"
+                            class="btn-primary"/>
+                    <button name="action_print_report"
+                            type="object"
+                            string="Skriv ut PDF"
+                            class="btn-secondary"/>
+                    <button special="cancel"
+                            string="Avbryt"
+                            class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!--
+        Result form view: read-only preview shown after the user
+        clicks Förhandsgranska. Renders the HTML summary computed
+        on the wizard plus a "Skatteverket-fält" mapping table that
+        shows which numbers go where in the e-tjänst.
+    -->
+    <record id="view_excise_declaration_result_form" model="ir.ui.view">
+        <field name="name">excise.declaration.wizard.result.form</field>
+        <field name="model">excise.declaration.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Kemikalieskatt — Förhandsgranskning"
+                  create="false" edit="false" delete="false">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Kemikalieskatt — Förhandsgranskning</h1>
+                        <p>
+                            Period:
+                            <strong><field name="date_from" readonly="1" nolabel="1"/></strong>
+                            –
+                            <strong><field name="date_to" readonly="1" nolabel="1"/></strong>
+                        </p>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="company_id" readonly="1"
+                                   groups="base.group_multi_company"/>
+                            <field name="grand_total_payable"
+                                   readonly="1"
+                                   widget="monetary"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <separator string="Fördelning per produktgrupp"/>
+                    <field name="declaration_summary"
+                           nolabel="1"
+                           readonly="1"
+                           widget="html"/>
+                    <div class="alert alert-info mt-3" role="alert">
+                        <strong>Så här fyller du i Skatteverkets
+                        e-tjänst:</strong>
+                        <ol class="mb-0">
+                            <li>
+                                Logga in på
+                                <em>skatteverket.se → e-tjänster →
+                                Punktskattedeklaration</em> med din
+                                e-legitimation.
+                            </li>
+                            <li>
+                                För varje produktgrupp (Vitvaror /
+                                Övrig elektronik) anger du
+                                <em>skattepliktig vikt</em> per
+                                avdragsnivå — använd
+                                <em>Vikt (kg)</em>-kolumnen ovan
+                                med tre decimaler.
+                            </li>
+                            <li>
+                                För varje avdragsrad anger du
+                                <em>brutto-skatt</em> och
+                                <em>avdragsbelopp</em>; e-tjänsten
+                                räknar fram netto.
+                            </li>
+                            <li>
+                                Verifiera att <em>Total att
+                                betala</em> ovan matchar e-tjänstens
+                                slutsumma innan du signerar.
+                            </li>
+                        </ol>
+                        <small class="text-muted">
+                            Tips: skriv ut PDF-versionen som
+                            verifikationsbilaga till bokföringen
+                            (BAS 2616 motsvarande Skatteverket-skuld).
+                        </small>
+                    </div>
+                </sheet>
+                <footer>
+                    <button name="action_print_report"
+                            type="object"
+                            string="Skriv ut PDF"
+                            class="btn-primary"/>
+                    <button special="cancel"
+                            string="Stäng"
+                            class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!--
+        Action + menu under Accounting → Reporting.
+    -->
+    <record id="action_excise_declaration_wizard" model="ir.actions.act_window">
+        <field name="name">Kemikalieskatt-deklaration</field>
+        <field name="res_model">excise.declaration.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_excise_declaration_wizard_form"/>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_excise_declaration_kemikalieskatt"
+              name="Punktskattedeklaration — Kemikalieskatt"
+              parent="account.menu_finance_reports"
+              action="action_excise_declaration_wizard"
+              sequence="200"/>
+
+</odoo>

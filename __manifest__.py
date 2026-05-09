@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Swedish Excise Tax (Chemical Tax)',
-    'version': '19.0.5.0.0',
+    'version': '19.0.6.1.0',
     'category': 'Accounting/Localizations',
     'summary': 'Manage chemical taxes and other excise duties applied before VAT.',
     'description': """
@@ -28,6 +28,7 @@ Key features:
         'data/excise_tax_data.xml',
         'views/product_views.xml',
         'views/excise_tax_default_views.xml',
+        'views/excise_declaration_views.xml',
         'views/account_tax_views.xml',
         'views/account_move_views.xml',
         'views/sale_order_views.xml',
@@ -35,6 +36,7 @@ Key features:
         'views/res_partner_views.xml',
         'views/report_templates.xml',
         'views/website_sale_templates.xml',
+        'report/excise_declaration_report.xml',
     ],
     'installable': True,
     'application': False,

@@ -805,6 +805,7 @@ msgstr ""
 #: model:ir.ui.menu,name:l10n_se_excise_tax.menu_excise_tax_default
 #: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.view_excise_tax_default_form
 #: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.view_excise_tax_default_list
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.res_config_settings_view_form_l10n_se_excise_tax
 msgid "Default Excise Tax Rules"
 msgstr "Standardregler för punktskatt"
 
@@ -980,3 +981,125 @@ msgstr ""
 "  - 50 % reducering om de inte innehåller brom- eller klorföreningar (>0,1 vikt-% av det homogena plast- eller kretskortsmaterialet).\n"
 "  - 95 % reducering om de inte innehåller brom-, klor- ELLER fosforföreningar.\n"
 "För andra punktskatter (nikotin, tobak, alkohol, …) lämna detta på 'Ingen reducering'."
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.res_config_settings_view_form_l10n_se_excise_tax
+msgid ""
+"Whether the Swedish excise tax appears as its own row between Untaxed Amount"
+" and VAT on quotations, sales orders, invoices and their PDF / portal "
+"renderings. When disabled, the excise amount is folded into Untaxed Amount "
+"(VAT base and total are unchanged)."
+msgstr ""
+"Anger om den svenska punktskatten visas på en egen rad mellan Summa exkl. "
+"moms och momsen på offerter, kundorder, fakturor och deras PDF / portal-"
+"utskrifter. När avaktiverad slås punktskattens belopp ihop med Summa exkl. "
+"moms (momsunderlag och totalsumma påverkas inte)."
+
+#. module: l10n_se_excise_tax
+#: model_terms:ir.ui.view,arch_db:l10n_se_excise_tax.res_config_settings_view_form_l10n_se_excise_tax
+msgid ""
+"Hide the Moms / VAT / Taxes column from the line table on quotation PDFs, "
+"order PDFs, invoice PDFs and the customer portal. The column is still "
+"available on the internal form view (toggle it via the column picker if you "
+"don't want to see it there either)."
+msgstr ""
+"Dölj kolumnen Moms / VAT / Taxes i radtabellen på offert-, order- och "
+"fakturautskrifter (PDF) samt i kundportalen. Kolumnen är fortfarande "
+"tillgänglig i den interna formulärvyn (slå av den via kolumnväljaren om du "
+"inte heller vill se den där)."
+
+#. module: l10n_se_excise_tax
+#: model:ir.model,name:l10n_se_excise_tax.model_excise_declaration_wizard
+msgid "Excise Tax Declaration (Kemikalieskatt)"
+msgstr "Punktskattedeklaration (Kemikalieskatt)"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_excise_declaration_wizard__company_id
+msgid "Company"
+msgstr "Företag"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_excise_declaration_wizard__date_from
+msgid "From Date"
+msgstr "Från datum"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_excise_declaration_wizard__date_to
+msgid "To Date"
+msgstr "Till datum"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_excise_declaration_wizard__declaration_summary
+msgid "Declaration Summary"
+msgstr "Sammanfattning av deklarationen"
+
+#. module: l10n_se_excise_tax
+#: model:ir.model.fields,field_description:l10n_se_excise_tax.field_excise_declaration_wizard__grand_total_payable
+msgid "Total Payable (SEK)"
+msgstr "Total att betala (kr)"
+
+#. module: l10n_se_excise_tax
+#: model:ir.actions.act_window,name:l10n_se_excise_tax.action_excise_declaration_wizard
+msgid "Kemikalieskatt-deklaration"
+msgstr "Kemikalieskatt-deklaration"
+
+#. module: l10n_se_excise_tax
+#: model:ir.ui.menu,name:l10n_se_excise_tax.menu_excise_declaration_kemikalieskatt
+msgid "Punktskattedeklaration — Kemikalieskatt"
+msgstr "Punktskattedeklaration — Kemikalieskatt"
+
+#. module: l10n_se_excise_tax
+#: code:addons/l10n_se_excise_tax/models/excise_declaration.py:0
+msgid "Product Group"
+msgstr "Produktgrupp"
+
+#. module: l10n_se_excise_tax
+#: code:addons/l10n_se_excise_tax/models/excise_declaration.py:0
+msgid "Reduction"
+msgstr "Avdrag"
+
+#. module: l10n_se_excise_tax
+#: code:addons/l10n_se_excise_tax/models/excise_declaration.py:0
+msgid "Weight (kg)"
+msgstr "Vikt (kg)"
+
+#. module: l10n_se_excise_tax
+#: code:addons/l10n_se_excise_tax/models/excise_declaration.py:0
+msgid "Brutto (SEK)"
+msgstr "Brutto (kr)"
+
+#. module: l10n_se_excise_tax
+#: code:addons/l10n_se_excise_tax/models/excise_declaration.py:0
+msgid "Avdrag (SEK)"
+msgstr "Avdrag (kr)"
+
+#. module: l10n_se_excise_tax
+#: code:addons/l10n_se_excise_tax/models/excise_declaration.py:0
+msgid "Netto (SEK)"
+msgstr "Netto (kr)"
+
+#. module: l10n_se_excise_tax
+#: code:addons/l10n_se_excise_tax/models/excise_declaration.py:0
+msgid "Lines"
+msgstr "Rader"
+
+#. module: l10n_se_excise_tax
+#: code:addons/l10n_se_excise_tax/models/excise_declaration.py:0
+msgid "Sub-total"
+msgstr "Delsumma"
+
+#. module: l10n_se_excise_tax
+#: code:addons/l10n_se_excise_tax/models/excise_declaration.py:0
+msgid "No posted Kemikalieskatt invoices in the selected period."
+msgstr "Inga bokförda Kemikalieskatt-fakturor hittades i den valda perioden."
+
+#. module: l10n_se_excise_tax
+#: code:addons/l10n_se_excise_tax/models/excise_declaration.py:0
+msgid "From Date (%(from)s) must be on or before To Date (%(to)s)."
+msgstr ""
+"Från-datum (%(from)s) måste vara samma som eller före till-datum (%(to)s)."
+
+#. module: l10n_se_excise_tax
+#: code:addons/l10n_se_excise_tax/models/excise_declaration.py:0
+msgid "Kemikalieskatt — Declaration Preview"
+msgstr "Kemikalieskatt — Förhandsgranskning av deklaration"

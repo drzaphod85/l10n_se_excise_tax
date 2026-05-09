@@ -339,6 +339,74 @@ class ProductTemplate(models.Model):
                     and rule.excise_tax_id not in product.taxes_id:
                 product.taxes_id = [(4, rule.excise_tax_id.id)]
 
+    @api.onchange('excise_tax_type_id')
+    def _onchange_excise_tax_type_sync_tax(self):
+        """Auto-sync Customer Taxes when the user picks (or swaps)
+        an Excise Tax Type on the product.
+
+        Mirrors the way Odoo's standard "default 25 % VAT for
+        Sweden" lands a 25 % G tax on every newly-created sale
+        product — when the user clicks an Excise Tax Type here, the
+        matching ``swedish_excise`` ``account.tax`` (e.g. CHEM E for
+        electronics, CHEM M for major appliances) is added to
+        ``taxes_id`` automatically. If the user *swaps* type
+        (e.g. CHEM E → CHEM M), the old swedish_excise tax that
+        no longer matches is removed first so the line doesn't end
+        up double-charged.
+
+        Behaviour rules:
+        * If no excise type is selected, do nothing — the user is
+          probably about to disable Excise Taxable, and silently
+          stripping the tax in that case would surprise them.
+        * If the product already carries the matching tax, do
+          nothing (idempotent).
+        * Multi-company: prefer a tax scoped to the active company,
+          fall back to global (``company_id=False``) taxes.
+        * Onchange-only — no DB write happens until the user saves
+          the product, so a misclick is recoverable by hitting
+          Discard.
+        """
+        for product in self:
+            new_type = product.excise_tax_type_id
+            if not new_type:
+                # Don't auto-strip — user may be mid-edit.
+                continue
+
+            company = self.env.company
+            new_tax = self.env['account.tax'].search(
+                [
+                    ('amount_type', '=', 'swedish_excise'),
+                    ('excise_type_id', '=', new_type.id),
+                    ('type_tax_use', '=', 'sale'),
+                    ('company_id', 'in', (company.id, False)),
+                ],
+                order='company_id desc, sequence, id',
+                limit=1,
+            )
+            if not new_tax:
+                # No swedish_excise tax exists for this type yet —
+                # the accountant probably needs to create one.
+                # Silently skip; the form's standard validation
+                # will catch the resulting "no excise tax in
+                # taxes_id" mismatch when the document is later
+                # used.
+                continue
+
+            # Drop any swedish_excise tax(es) that don't match the
+            # newly-picked type. Leaves VAT and other non-excise
+            # taxes untouched.
+            stale = product.taxes_id.filtered(
+                lambda t: (
+                    t.amount_type == 'swedish_excise'
+                    and t.id != new_tax.id
+                )
+            )
+            if stale:
+                product.taxes_id = product.taxes_id - stale
+
+            if new_tax not in product.taxes_id:
+                product.taxes_id = [(4, new_tax.id)]
+
     def action_apply_excise_defaults(self):
         """Server action — bulk-apply default rules to a selection.
 
