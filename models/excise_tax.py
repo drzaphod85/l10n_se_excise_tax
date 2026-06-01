@@ -223,6 +223,65 @@ class ProductTemplate(models.Model):
             return base_price
         return base_price + (self.excise_amount_per_unit or 0.0)
 
+    # ------------------------------------------------------------------
+    # eCommerce product page — server-side dict that the JS reads
+    # ------------------------------------------------------------------
+    # The QWeb template ``website_sale.product_price`` renders the
+    # initial price using ``combination_info['price']`` and our
+    # ``product_price_l10n_se_excise`` inherit bumps it via
+    # ``_get_excise_inclusive_price``. That covers the FIRST render.
+    #
+    # After that, the website_sale Owl controller calls
+    # ``product.template._get_combination_info`` on every variant
+    # change, quantity change, and a few times during page load to
+    # reactively refresh the displayed price. The JS reads
+    # ``info['price']`` from the response and overwrites
+    # ``<span class="oe_price">`` directly via DOM manipulation —
+    # bypassing our QWeb override completely.
+    #
+    # Without this hook the user sees the correct excise-inclusive
+    # price for ~50–200ms while the page first paints, then it
+    # snaps back to the bare price the moment the Owl combination-
+    # info refresh lands. The fix is to bump ``info['price']`` here
+    # so client-side updates carry the same add-on as the server-
+    # side initial render.
+    # ------------------------------------------------------------------
+    def _get_combination_info(self, *args, **kwargs):
+        # Use *args / **kwargs rather than the explicit Odoo-17/18
+        # signature (combination, product_id, add_qty,
+        # parent_combination, only_template). Odoo 19's
+        # website_sale.controllers.main calls this with NO arguments
+        # in some code paths, and the kwargs differ across minor
+        # versions — pass through whatever the caller gives us so
+        # the override is signature-agnostic and forward-compatible.
+        info = super()._get_combination_info(*args, **kwargs)
+        # Fold-mode-only bump. ``_get_excise_inclusive_price``
+        # already short-circuits when the product isn't
+        # excise-taxable OR when the company is in separate-row
+        # mode, so we can call it unconditionally — but skipping
+        # the lookup for non-excise products saves an env.company
+        # round-trip on every variant change.
+        if not self.is_excise_taxable:
+            return info
+        company = self.env.company
+        if company.excise_show_as_separate_row:
+            return info
+
+        base_price = info.get('price', 0.0)
+        info['price'] = self._get_excise_inclusive_price(base_price)
+
+        # ``list_price`` drives the strikethrough "was X kr" badge
+        # next to a discounted price. Bumping it too keeps the
+        # discount visually consistent (the customer sees both the
+        # crossed-out and the live price including excise). When
+        # there is no discount Odoo doesn't display ``list_price``
+        # so this is a no-op for the common case.
+        list_price = info.get('list_price')
+        if list_price:
+            info['list_price'] = self._get_excise_inclusive_price(list_price)
+
+        return info
+
     # Mirror of the linked Excise Type's ``unit_basis``. Used by the
     # product form to switch which driver field is visible (kg vs
     # liter). Exposed as a related field so the view can reference
